@@ -1,19 +1,27 @@
-import java.sql.*;
-import javax.swing.JOptionPane;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class Koneksi {
-    Connection koneksi;
 
-    public static Connection Koneksi(){
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection koneksi = DriverManager.getConnection("jdbc:mysql://localhost/toko_buku_uas_pbo","root","");
+    // Konfigurasi tetap sesuai kode awal
+    private static final String URL = "jdbc:mysql://localhost/toko_buku_uas_pbo";
+    private static final String USER = "root";
+    private static final String PASSWORD = "";
 
-            return koneksi;
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, e);
+    // Method untuk mengambil koneksi
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USER, PASSWORD);
+    }
 
-            return null;
+    // Testing koneksi
+    public static void main(String[] args) {
+        try (Connection conn = getConnection()) {
+            if (conn != null) {
+                System.out.println("Koneksi ke MySQL berhasil!");
+            }
+        } catch (SQLException e) {
+            System.out.println("Koneksi gagal: " + e.getMessage());
         }
     }
 }
