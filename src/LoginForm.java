@@ -3,9 +3,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
 import javax.swing.JOptionPane;
+import admin.Dashboard;
 
 
-public class LoginForm {
+public class LoginForm extends JFrame{
     private JTextField txtUsername;
     private JPasswordField txtPassword;
     private JButton loginButton;
@@ -28,14 +29,14 @@ public class LoginForm {
                     ResultSet rs = st.executeQuery(sql);
                     if (rs.next()) {
                         if (rs.getString("role").equals("admin")) {
-                            JOptionPane.showMessageDialog(null, "login berhasil");
+//                            JOptionPane.showMessageDialog(null, "login berhasil");
                             txtUsername.setText("");
                             txtPassword.setText("");
                             txtUsername.requestFocus();
-//                            dashboardAdmin da = new dashboardAdmin();
-//
-//                            da.show();
-//                            this.dispose();
+                            Dashboard da = new Dashboard();
+                            da.setVisible(true);
+                            LoginForm.this.dispose();
+
                         }else if(rs.getString("eole").equals("staff")){
 //                            dashboardStaff ds = new dashboardStaff();
 //
@@ -58,10 +59,12 @@ public class LoginForm {
     }
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame("LoginForm");
-        frame.setContentPane(new LoginForm().rootPanel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setVisible(true);
+        LoginForm login = new LoginForm();
+        login.setTitle("Login Form");
+        login.setContentPane(login.rootPanel);
+        login.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        login.pack();
+        login.setLocationRelativeTo(null);
+        login.setVisible(true);
     }
 }
