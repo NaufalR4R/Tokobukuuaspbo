@@ -37,6 +37,25 @@ public class Kategori {
     public String getDeskripsi() { return deskripsi; }
     public void setDeskripsi(String deskripsi) { this.deskripsi = deskripsi; }
 
+    public int countBuku() {
+        String query = "SELECT COUNT(id) FROM buku WHERE id_kategori = ?";
+
+        try (Connection conn = Koneksi.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, this.id);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Gagal menghitung buku untuk kategori ID " + this.id + ": " + e.getMessage());
+        }
+        return 0;
+    }
+
     // CREATE CATEGORY
     public boolean createKategori() {
         String query = "INSERT INTO kategori (nama, deskripsi) VALUES (?, ?)";

@@ -7,18 +7,29 @@ import java.awt.event.ActionEvent;
 
 public class EditKategoriDialog extends JDialog {
 
-    private final DefaultTableModel model;
-    private final int rowIndex;
-    private final JTextField namaKategoriField;
+    private KelolaKategoriPanel parentPanel;
+    private int idKategori;
+    private int rowIndex;
+    private Kategori currentKategori;
+    private JTextField namaKategoriField;
+    private JTextArea deskripsiArea;
 
-    public EditKategoriDialog(Window owner, DefaultTableModel model, int rowIndex) {
+    public EditKategoriDialog(Window owner, KelolaKategoriPanel parentPanel, int idKategori){
         super(owner, "Edit Detail Kategori", ModalityType.APPLICATION_MODAL);
-        this.model = model;
-        this.rowIndex = rowIndex;
+        this.parentPanel = parentPanel;
+        this.idKategori = idKategori;
 
-        // --- Ambil Data Kategori Saat Ini ---
-        String currentId = model.getValueAt(rowIndex, 0).toString();
-        String currentNama = model.getValueAt(rowIndex, 1).toString();
+        this.currentKategori = Kategori.getKategoriById(idKategori);
+
+        if (currentKategori == null) {
+            JOptionPane.showMessageDialog(owner, "Gagal memuat data kategori ID: " + idKategori, "Error", JOptionPane.ERROR_MESSAGE);
+            dispose();
+            return;
+        }
+
+        // --- Inisialisasi Data dari Objek Kategori ---
+        String currentNama = currentKategori.getNama();
+        String currentDeskripsi = currentKategori.getDeskripsi() != null ? currentKategori.getDeskripsi() : "";
 
         setLayout(new GridBagLayout());
         if (getContentPane() instanceof JPanel) {
@@ -30,19 +41,31 @@ public class EditKategoriDialog extends JDialog {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // --- Header ---
-        JLabel titleLabel = new JLabel("Edit Kategori ID: " + currentId);
+        JLabel titleLabel = new JLabel("Edit Kategori ID: " + idKategori);
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         add(titleLabel, gbc);
 
-        // --- Input Field ---
+        // --- Input Field Nama ---
         gbc.gridwidth = 1;
         gbc.gridx = 0; gbc.gridy++;
         add(new JLabel("Nama Kategori"), gbc);
 
+        // Inisialisasi field
         namaKategoriField = new JTextField(currentNama, 20);
         gbc.gridx = 1;
         add(namaKategoriField, gbc);
+
+        // --- Input Field Deskripsi ---
+        gbc.gridx = 0; gbc.gridy++;
+        add(new JLabel("Deskripsi (Opsional)"), gbc);
+
+        // Inisialisasi field
+        deskripsiArea = new JTextArea(currentDeskripsi, 3, 20);
+        deskripsiArea.setLineWrap(true);
+        deskripsiArea.setWrapStyleWord(true);
+        gbc.gridx = 1;
+        add(new JScrollPane(deskripsiArea), gbc);
 
         // --- Buttons ---
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -73,17 +96,27 @@ public class EditKategoriDialog extends JDialog {
 
     private void simpanPerubahanKategori() {
         String newNama = namaKategoriField.getText().trim();
+        String newDeskripsi = deskripsiArea.getText().trim();
 
         if (newNama.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Nama Kategori harus diisi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Kolom Nama Kategori adalah indeks 1
-        model.setValueAt(newNama, rowIndex, 1);
+        // 1. Update Objek Kategori
+        currentKategori.setNama(newNama);
+        currentKategori.setDeskripsi(newDeskripsi);
 
-        JOptionPane.showMessageDialog(this, "Kategori '" + newNama + "' berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+        // 2. Panggil method UPDATE database
+        if (currentKategori.updateKategori()) {
+            JOptionPane.showMessageDialog(this, "Kategori '" + newNama + "' berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
 
-        dispose();
+            // 3. Perbarui JTable model
+            parentPanel.loadDataFromDatabase();
+
+            dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, "Gagal memperbarui kategori di database. Periksa koneksi atau log sistem.", "Gagal", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

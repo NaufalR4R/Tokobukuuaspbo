@@ -1,7 +1,7 @@
 package admin.kategori;
 
 import admin.kategori.ButtonRenderer;
-import admin.kategori.ButtonEditor; // Pastikan ButtonEditor ada di package yang sama
+import admin.kategori.ButtonEditor;
 import admin.kategori.EditKategoriDialog;
 import admin.kategori.TambahKategoriDialog;
 
@@ -63,7 +63,7 @@ public class KelolaKategoriPanel extends JPanel {
         // Memanggil TambahKategoriDialog dan REFRESH data setelahnya
         tambahKategoriBtn.addActionListener(e -> {
             Window owner = SwingUtilities.getWindowAncestor(this);
-            // Meneruskan referensi model dan panel (this) agar bisa me-load ulang data
+            // Anda mungkin ingin mengubah TambahKategoriDialog untuk menerima 'this' agar dapat me-refresh tabel
             TambahKategoriDialog dialog = new TambahKategoriDialog(owner, this.model);
             dialog.setVisible(true);
         });
@@ -79,9 +79,9 @@ public class KelolaKategoriPanel extends JPanel {
         table.setRowHeight(30);
 
         // PENTING: Atur Button Renderer dan Editor untuk kolom "Aksi" (indeks 3)
-        // Catatan: Asumsi ButtonEditor menerima model dan panel (this)
         TableColumn actionColumn = table.getColumnModel().getColumn(3);
         actionColumn.setCellRenderer(new ButtonRenderer());
+        // ASUMSI: ButtonEditor menerima JTable, DefaultTableModel, dan Panel Induk (this)
         actionColumn.setCellEditor(new ButtonEditor(table, model, this));
 
         // Mengatur lebar kolom
@@ -101,24 +101,21 @@ public class KelolaKategoriPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
     }
 
-    /**
-     * Method untuk memuat data kategori dari database dan menampilkannya di JTable.
-     */
+    // Method untuk memuat data kategori dari database dan menampilkannya di JTable.
     public void loadDataFromDatabase() {
-        // Membersihkan data lama
         model.setRowCount(0);
 
-        // Mengambil data dari database menggunakan model Kategori
         List<Kategori> listKategori = Kategori.getAllKategori();
 
         for (Kategori k : listKategori) {
-            // Catatan: Jumlah Buku diisi dengan string statis "N/A" atau hitungan buku yang benar.
-            // Untuk saat ini, kita gunakan string dummy "0 buku" karena logic hitungan buku tidak ada.
+
+            int jumlahBuku = k.countBuku();
+            String jumlahBukuText = jumlahBuku + " buku";
             model.addRow(new Object[]{
                     k.getId(),
                     k.getNama(),
-                    "0 buku", // TODO: Ganti dengan query hitungan buku yang sebenarnya
-                    "" // Kolom Aksi
+                    jumlahBukuText,
+                    ""
             });
         }
     }
@@ -128,8 +125,9 @@ public class KelolaKategoriPanel extends JPanel {
         int idKategori = (int) model.getValueAt(row, 0);
 
         Window owner = SwingUtilities.getWindowAncestor(this);
-//        EditKategoriDialog dialog = new EditKategoriDialog(owner, idKategori, this);
-//        dialog.setVisible(true);
+
+        EditKategoriDialog dialog = new EditKategoriDialog(owner, this, idKategori);
+        dialog.setVisible(true);
     }
 
     // Method untuk menangani aksi hapus kategori (dipanggil dari ButtonEditor)

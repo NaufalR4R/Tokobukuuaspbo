@@ -5,21 +5,16 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-// Import class Kategori dan Buku
 import admin.kategori.Kategori;
-import admin.buku.Buku;
 
 public class EditBukuDialog extends JDialog {
 
-    // Ganti DefaultTableModel/rowIndex menjadi KelolaBukuPanel/idBuku
     private final KelolaBukuPanel parentPanel;
     private final int idBuku;
 
-    // Data dari database
     private Buku currentBuku;
     private List<Kategori> listKategori;
 
-    // Components (FINAL dihilangkan untuk mengatasi error inisialisasi)
     private JTextField judulField;
     private JTextField pengarangField;
     private JTextField penerbitField;
@@ -37,14 +32,12 @@ public class EditBukuDialog extends JDialog {
         currentBuku = Buku.getById(idBuku);
         listKategori = Kategori.getAllKategori();
 
-        // Pengecekan data buku dilakukan di sini
         if (currentBuku == null) {
             JOptionPane.showMessageDialog(owner, "Gagal memuat data buku (ID: " + idBuku + ").", "Error", JOptionPane.ERROR_MESSAGE);
             dispose();
-            return; // Konstruktor keluar di sini
+            return;
         }
 
-        // --- Inisialisasi Data dari Objek Buku ---
         String currentJudul = currentBuku.getJudul();
         String currentPenulis = currentBuku.getPenulis();
         String currentPenerbit = currentBuku.getPenerbit() != null ? currentBuku.getPenerbit() : "";
@@ -62,13 +55,11 @@ public class EditBukuDialog extends JDialog {
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // --- Header ---
         JLabel titleLabel = new JLabel("Edit Buku ID: " + idBuku);
         titleLabel.setFont(new Font("Serif", Font.BOLD, 18));
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         add(titleLabel, gbc);
 
-        // --- Input Fields & Inisialisasi Komponen ---
         gbc.gridwidth = 1;
 
         // Judul
