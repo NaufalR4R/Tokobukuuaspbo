@@ -1,18 +1,18 @@
 package admin.kategori;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class TambahKategoriDialog extends JDialog {
 
-    private final DefaultTableModel model;
+    private final KelolaKategoriPanel parentPanel;
     private final JTextField namaKategoriField;
+    private final JTextArea deskripsiArea;
 
-    public TambahKategoriDialog(Window owner, DefaultTableModel model) {
+    public TambahKategoriDialog(Window owner, KelolaKategoriPanel parentPanel) {
         super(owner, "Tambah Kategori Baru", ModalityType.APPLICATION_MODAL);
-        this.model = model;
+        this.parentPanel = parentPanel;
 
         setLayout(new GridBagLayout());
         if (getContentPane() instanceof JPanel) {
@@ -29,15 +29,25 @@ public class TambahKategoriDialog extends JDialog {
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         add(titleLabel, gbc);
 
-        // --- Input Field ---
+        // --- Input Field Nama Kategori ---
         gbc.gridwidth = 1;
         gbc.gridx = 0; gbc.gridy++;
-        add(new JLabel("Nama Kategori"), gbc);
+        add(new JLabel("Nama Kategori *"), gbc);
 
         namaKategoriField = new JTextField(20);
-        namaKategoriField.setText(""); // Pastikan field kosong saat dibuka
+        namaKategoriField.setText("");
         gbc.gridx = 1;
         add(namaKategoriField, gbc);
+
+        // --- Input Field Deskripsi ---
+        gbc.gridx = 0; gbc.gridy++;
+        add(new JLabel("Deskripsi (Opsional)"), gbc);
+
+        deskripsiArea = new JTextArea(3, 20);
+        deskripsiArea.setLineWrap(true);
+        deskripsiArea.setWrapStyleWord(true);
+        gbc.gridx = 1;
+        add(new JScrollPane(deskripsiArea), gbc);
 
         // --- Buttons ---
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -68,47 +78,24 @@ public class TambahKategoriDialog extends JDialog {
 
     private void tambahKategoriBaru() {
         String newNama = namaKategoriField.getText().trim();
+        String newDeskripsi = deskripsiArea.getText().trim();
 
         if (newNama.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Nama Kategori harus diisi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 1. Generate ID Baru (Mencari ID terbesar dari tabel kategori)
-        int nextId = getNextKategoriId(model);
+        // 1. Buat objek Kategori
+        Kategori newKategori = new Kategori();
+        newKategori.setNama(newNama);
+        newKategori.setDeskripsi(newDeskripsi);
 
-        // 2. Tambahkan ke Tabel
-        // Kolom: {"ID", "Nama Kategori", "Jumlah Buku", "Aksi"}
+        // 2. Simpan ke Database
+        if (newKategori.createKategori()) {
+            JOptionPane.showMessageDialog(this, "Kategori '" + newNama + "' berhasil ditambahkan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+            parentPanel.loadDataFromDatabase();
 
-        model.addRow(new Object[]{
-                nextId,
-                newNama,
-                "0 buku", // Kategori baru, jumlah buku default 0
-                "" // Kolom Aksi
-        });
-
-        JOptionPane.showMessageDialog(this, "Kategori '" + newNama + "' berhasil ditambahkan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
-
-        dispose();
-    }
-
-    // Method untuk mendapatkan ID kategori berikutnya (ID terbesar + 1)
-    private int getNextKategoriId(DefaultTableModel model) {
-        int maxId = 0;
-        for (int i = 0; i < model.getRowCount(); i++) {
-            try {
-                // Kolom ID adalah indeks 0
-                Object idValue = model.getValueAt(i, 0);
-                if (idValue instanceof Integer) {
-                    int currentId = (Integer) idValue;
-                    if (currentId > maxId) {
-                        maxId = currentId;
-                    }
-                }
-            } catch (Exception ignore) {
-                // Abaikan jika ada nilai non-Integer di kolom ID
-            }
+            dispose();
         }
-        return maxId + 1;
     }
 }

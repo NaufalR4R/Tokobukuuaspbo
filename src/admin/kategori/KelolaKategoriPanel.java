@@ -1,10 +1,5 @@
 package admin.kategori;
 
-import admin.kategori.ButtonRenderer;
-import admin.kategori.ButtonEditor;
-import admin.kategori.EditKategoriDialog;
-import admin.kategori.TambahKategoriDialog;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
@@ -26,7 +21,6 @@ public class KelolaKategoriPanel extends JPanel {
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
-                // Hanya kolom "Aksi" (indeks 3) yang bisa diedit (untuk tombol)
                 return col == 3;
             }
             @Override
@@ -63,8 +57,7 @@ public class KelolaKategoriPanel extends JPanel {
         // Memanggil TambahKategoriDialog dan REFRESH data setelahnya
         tambahKategoriBtn.addActionListener(e -> {
             Window owner = SwingUtilities.getWindowAncestor(this);
-            // Anda mungkin ingin mengubah TambahKategoriDialog untuk menerima 'this' agar dapat me-refresh tabel
-            TambahKategoriDialog dialog = new TambahKategoriDialog(owner, this.model);
+            TambahKategoriDialog dialog = new TambahKategoriDialog(owner, this);
             dialog.setVisible(true);
         });
 
@@ -75,13 +68,9 @@ public class KelolaKategoriPanel extends JPanel {
         // 3. Setup Tabel
         table = new JTable(model);
 
-        // Mengatur ketinggian baris agar tombol muat
         table.setRowHeight(30);
-
-        // PENTING: Atur Button Renderer dan Editor untuk kolom "Aksi" (indeks 3)
         TableColumn actionColumn = table.getColumnModel().getColumn(3);
         actionColumn.setCellRenderer(new ButtonRenderer());
-        // ASUMSI: ButtonEditor menerima JTable, DefaultTableModel, dan Panel Induk (this)
         actionColumn.setCellEditor(new ButtonEditor(table, model, this));
 
         // Mengatur lebar kolom
