@@ -6,10 +6,6 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
 
-// Asumsi: Anda memiliki kelas Kategori (atau helper method) untuk mengambil nama kategori.
-// Jika belum ada, placeholder "ID Kategori: X" akan digunakan.
-// import admin.kategori.Kategori;
-
 public class KelolaBukuPanel extends JPanel {
 
     private final DefaultTableModel model;
@@ -59,8 +55,7 @@ public class KelolaBukuPanel extends JPanel {
         tambahBukuBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
         tambahBukuBtn.addActionListener(e -> {
             Window owner = SwingUtilities.getWindowAncestor(this);
-            // KORREKSI: Meneruskan 'this' (KelolaBukuPanel) agar bisa memanggil loadBukuData()
-            TambahBukuDialog dialog = new TambahBukuDialog(owner, this.model);
+            TambahBukuDialog dialog = new TambahBukuDialog(owner, this);
             dialog.setVisible(true);
         });
         header.add(tambahBukuBtn, BorderLayout.EAST);
@@ -70,7 +65,7 @@ public class KelolaBukuPanel extends JPanel {
         searchPanel.setBackground(new Color(250, 247, 243));
         JTextField searchField = new JTextField("Cari judul, pengarang, atau kategori...");
         JButton refreshBtn = new JButton("Refresh");
-        refreshBtn.addActionListener(e -> loadBukuData()); // Aksi refresh
+        refreshBtn.addActionListener(e -> loadBukuData());
         searchPanel.add(searchField, BorderLayout.CENTER);
         searchPanel.add(refreshBtn, BorderLayout.EAST);
         JPanel topContainer = new JPanel(new BorderLayout(0, 10));
@@ -83,7 +78,6 @@ public class KelolaBukuPanel extends JPanel {
         table = new JTable(model);
         table.setRowHeight(30);
 
-        // Pastikan ButtonRenderer dan ButtonEditor ada di package yang sama atau diimpor
         TableColumn actionColumn = table.getColumnModel().getColumn(6);
         actionColumn.setCellRenderer(new ButtonRenderer());
         actionColumn.setCellEditor(new ButtonEditor(table, model, this));
@@ -102,33 +96,25 @@ public class KelolaBukuPanel extends JPanel {
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         add(scrollPane, BorderLayout.CENTER);
 
-        // Muat data buku dari database saat panel dibuat
         loadBukuData();
 
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
     }
 
-    /**
-     * Memuat data buku dari database dan mengisi JTable.
-     */
+    // Memuat data buku dari database dan mengisi JTable.
     public void loadBukuData() {
-        // Kosongkan tabel sebelum memuat data baru
         model.setRowCount(0);
 
         ArrayList<Buku> listBuku = Buku.getAll();
 
         for (Buku buku : listBuku) {
-            // Placeholder: Mendapatkan nama kategori. Ganti dengan implementasi sebenarnya.
             String kategoriNama;
             try {
-                // Jika Anda punya kelas Kategori.getNamaById():
-                // kategoriNama = Kategori.getNamaById(buku.getIdKategori());
-                kategoriNama = "ID Kategori: " + buku.getIdKategori(); // Placeholder
+                kategoriNama = "ID Kategori: " + buku.getIdKategori();
             } catch (Exception e) {
                 kategoriNama = "Error";
             }
 
-            // Format harga menjadi String Rupiah (sederhana)
             String hargaFormatted = String.format("Rp %,.0f", buku.getHarga());
 
             model.addRow(new Object[]{
@@ -138,7 +124,7 @@ public class KelolaBukuPanel extends JPanel {
                     kategoriNama,
                     hargaFormatted,
                     buku.getStok(),
-                    "" // Kolom aksi (untuk tombol)
+                    ""
             });
         }
     }
@@ -147,7 +133,6 @@ public class KelolaBukuPanel extends JPanel {
     public void handleEditAction(int row) {
         int idBuku = (int) model.getValueAt(row, 0);
         Window owner = SwingUtilities.getWindowAncestor(this);
-        // KORREKSI: Meneruskan 'this' (KelolaBukuPanel) dan ID Buku
         EditBukuDialog dialog = new EditBukuDialog(owner, this.model, idBuku);
         dialog.setVisible(true);
     }
@@ -163,8 +148,7 @@ public class KelolaBukuPanel extends JPanel {
 
         if (confirm == JOptionPane.YES_OPTION) {
             if (Buku.delete(id)) {
-                // Jika berhasil dihapus dari database, muat ulang data
-                loadBukuData(); // Lebih aman memanggil loadBukuData daripada removeRow
+                loadBukuData();
                 JOptionPane.showMessageDialog(this, "Buku ID " + id + " berhasil dihapus.", "Berhasil", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(this, "Gagal menghapus buku ID " + id + " dari database.", "Gagal", JOptionPane.ERROR_MESSAGE);

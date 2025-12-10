@@ -1,17 +1,20 @@
 package admin.buku;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class TambahBukuDialog extends JDialog {
 
-    private final DefaultTableModel model; // Simpan model sebagai field
+    private final KelolaBukuPanel parentPanel; // Ganti DefaultTableModel menjadi KelolaBukuPanel
 
-    public TambahBukuDialog(Window owner, DefaultTableModel model) {
+    // Mapping sederhana untuk Kategori (Asumsi: 1=Fiksi, 2=Non-Fiksi, dst.)
+    private final String[] kategoriOptions = new String[]{"Fiksi", "Non-Fiksi", "Teknologi", "Bisnis", "Lainnya"};
+
+    // KORREKSI CONSTRUCTOR: Menerima KelolaBukuPanel
+    public TambahBukuDialog(Window owner, KelolaBukuPanel parentPanel) {
         super(owner, "Tambah Buku Baru", ModalityType.APPLICATION_MODAL);
-        this.model = model;
+        this.parentPanel = parentPanel;
 
         setLayout(new GridBagLayout());
         if (getContentPane() instanceof JPanel) {
@@ -34,17 +37,25 @@ public class TambahBukuDialog extends JDialog {
         gbc.gridx = 1;
         add(judulField, gbc);
 
-        // Pengarang
+        // Pengarang (Penulis)
         gbc.gridx = 0; gbc.gridy++;
         add(new JLabel("Pengarang *"), gbc);
         JTextField pengarangField = new JTextField(20);
         gbc.gridx = 1;
         add(pengarangField, gbc);
 
+        // Penerbit (Ditambahkan karena ada di kelas Buku.java)
+        gbc.gridx = 0; gbc.gridy++;
+        add(new JLabel("Penerbit"), gbc);
+        JTextField penerbitField = new JTextField(20);
+        gbc.gridx = 1;
+        add(penerbitField, gbc);
+
+
         // Kategori
         gbc.gridx = 0; gbc.gridy++;
         add(new JLabel("Kategori"), gbc);
-        JComboBox<String> kategoriBox = new JComboBox<>(new String[]{"Fiksi", "Non-Fiksi", "Teknologi", "Bisnis", "Lainnya"});
+        JComboBox<String> kategoriBox = new JComboBox<>(kategoriOptions);
         gbc.gridx = 1;
         add(kategoriBox, gbc);
 
@@ -87,31 +98,10 @@ public class TambahBukuDialog extends JDialog {
         add(btnPanel, gbc);
 
         batalBtn.addActionListener(e -> dispose());
+
+        // LOGIKA BARU: Simpan ke database
         tambahBtn.addActionListener((ActionEvent e) -> {
-            String judul = judulField.getText().trim();
-            String pengarang = pengarangField.getText().trim();
-            String kategori = kategoriBox.getSelectedItem().toString();
-            String hargaText = hargaField.getText().trim().replaceAll("[^\\d]", "");
-            String stokText = stokField.getText().trim().replaceAll("[^\\d]", "");
-            if (judul.isEmpty() || pengarang.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Judul dan Pengarang harus diisi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            int harga;
-            int stok;
-            try {
-                harga = Integer.parseInt(hargaText);
-                stok = Integer.parseInt(stokText);
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Harga dan Stok harus berupa angka yang valid.", "Peringatan", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            int nextId = getNextBookId(model);
-
-            model.addRow(new Object[]{nextId, judul, pengarang, kategori, String.format("Rp %,d", harga), stok, ""});
-            JOptionPane.showMessageDialog(this, "Buku '" + judul + "' berhasil ditambahkan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
-            dispose();
+            simpanBukuBaru(judulField, pengarangField, penerbitField, kategoriBox, hargaField, stokField, deskripsiArea);
         });
 
         pack();
@@ -119,24 +109,78 @@ public class TambahBukuDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
-    // Method untuk mendapatkan ID buku berikutnya (ID terbesar + 1)
-    private int getNextBookId(DefaultTableModel model) {
-        int maxId = 0;
-        for (int i = 0; i < model.getRowCount(); i++) {
-            try {
-                // Kolom ID (indeks 0) adalah Integer (berdasarkan KelolaBukuPanel)
-                Object idValue = model.getValueAt(i, 0);
-                if (idValue instanceof Integer) {
-                    int currentId = (Integer) idValue;
-                    if (currentId > maxId) {
-                        maxId = currentId;
-                    }
-                }
-            } catch (Exception ignore) {
-                // Abaikan jika ada nilai non-Integer di kolom ID
+    /**
+     * Konversi Nama Kategori menjadi ID Kategori (Peringatan: Ganti dengan query database kategori yang sebenarnya!)
+     */
+    private int getKategoriIdByName(String namaKategori) {
+        // Ini adalah contoh mapping sederhana:
+        for (int i = 0; i < kategoriOptions.length; i++) {
+            if (kategoriOptions[i].equalsIgnoreCase(namaKategori)) {
+                return i + 1; // Asumsi ID dimulai dari 1
             }
         }
-        return maxId + 1;
+        return 0; // ID default
+    }
+
+    /**
+     * Logika untuk mengambil data dari form, memvalidasi, membuat objek Buku,
+     * menyimpan ke database, dan me-refresh tabel utama.
+     */
+    private void simpanBukuBaru(
+            JTextField judulField, JTextField pengarangField, JTextField penerbitField,
+            JComboBox<String> kategoriBox, JTextField hargaField, JTextField stokField,
+            JTextArea deskripsiArea) {
+
+        // 1. Ambil dan Bersihkan Data
+        String judul = judulField.getText().trim();
+        String penulis = pengarangField.getText().trim();
+        String penerbit = penerbitField.getText().trim();
+        String kategori = kategoriBox.getSelectedItem().toString();
+        String deskripsi = deskripsiArea.getText().trim();
+
+        // Hapus format non-digit ('Rp', titik, koma) dari harga dan stok
+        String hargaText = hargaField.getText().trim().replaceAll("[^\\d]", "");
+        String stokText = stokField.getText().trim().replaceAll("[^\\d]", "");
+
+        // 2. Validasi Input
+        if (judul.isEmpty() || penulis.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Judul dan Pengarang harus diisi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        double harga;
+        int stok;
+        int idKategori;
+
+        try {
+            harga = Double.parseDouble(hargaText);
+            stok = Integer.parseInt(stokText);
+            idKategori = getKategoriIdByName(kategori);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Harga dan Stok harus berupa angka yang valid.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 3. Buat Objek Buku dan Isi Data
+        Buku bukuBaru = new Buku();
+        bukuBaru.setJudul(judul);
+        bukuBaru.setPenulis(penulis);
+        bukuBaru.setPenerbit(penerbit);
+        bukuBaru.setIdKategori(idKategori);
+        bukuBaru.setHarga(harga);
+        bukuBaru.setStok(stok);
+        bukuBaru.setDeskripsi(deskripsi);
+
+        // 4. Panggil CREATE Database
+        if (bukuBaru.create()) {
+            JOptionPane.showMessageDialog(this, "Buku '" + judul + "' berhasil ditambahkan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+
+            // PENTING: Muat ulang data di KelolaBukuPanel agar tabel terupdate dari database
+            parentPanel.loadBukuData();
+
+            dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, "Gagal menambahkan buku ke database. Periksa koneksi atau log sistem.", "Gagal", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
-
