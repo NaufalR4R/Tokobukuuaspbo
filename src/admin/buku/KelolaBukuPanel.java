@@ -6,6 +6,11 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
 
+// Import kelas Kategori dan Buku
+import admin.kategori.Kategori;
+// ASUMSI: Class Buku ada di package models. Silakan sesuaikan jika berbeda.
+import admin.buku.Buku;
+
 public class KelolaBukuPanel extends JPanel {
 
     private final DefaultTableModel model;
@@ -78,6 +83,7 @@ public class KelolaBukuPanel extends JPanel {
         table = new JTable(model);
         table.setRowHeight(30);
 
+        // ASUMSI: ButtonRenderer dan ButtonEditor sudah tersedia di package yang sama
         TableColumn actionColumn = table.getColumnModel().getColumn(6);
         actionColumn.setCellRenderer(new ButtonRenderer());
         actionColumn.setCellEditor(new ButtonEditor(table, model, this));
@@ -105,14 +111,23 @@ public class KelolaBukuPanel extends JPanel {
     public void loadBukuData() {
         model.setRowCount(0);
 
+        // ASUMSI: Method Buku.getAll() sudah ada dan mengembalikan ArrayList<Buku>
         ArrayList<Buku> listBuku = Buku.getAll();
 
         for (Buku buku : listBuku) {
             String kategoriNama;
-            try {
-                kategoriNama = "ID Kategori: " + buku.getIdKategori();
-            } catch (Exception e) {
-                kategoriNama = "Error";
+
+            // 1. Dapatkan ID Kategori dari objek Buku
+            int idKategori = buku.getIdKategori();
+
+            // 2. Dapatkan objek Kategori berdasarkan ID
+            Kategori kategori = Kategori.getKategoriById(idKategori);
+
+            // 3. Ekstrak nama kategori
+            if (kategori != null) {
+                kategoriNama = kategori.getNama(); // Mengambil nama kategori
+            } else {
+                kategoriNama = "N/A (ID: " + idKategori + ")"; // Handle jika kategori tidak ditemukan
             }
 
             String hargaFormatted = String.format("Rp %,.0f", buku.getHarga());
@@ -121,7 +136,7 @@ public class KelolaBukuPanel extends JPanel {
                     buku.getId(),
                     buku.getJudul(),
                     buku.getPenulis(),
-                    kategoriNama,
+                    kategoriNama, // Menggunakan Nama Kategori
                     hargaFormatted,
                     buku.getStok(),
                     ""
@@ -133,6 +148,7 @@ public class KelolaBukuPanel extends JPanel {
     public void handleEditAction(int row) {
         int idBuku = (int) model.getValueAt(row, 0);
         Window owner = SwingUtilities.getWindowAncestor(this);
+        // ASUMSI: EditBukuDialog menerima KelolaBukuPanel (this) agar bisa refresh data
         EditBukuDialog dialog = new EditBukuDialog(owner, this.model, idBuku);
         dialog.setVisible(true);
     }

@@ -13,6 +13,11 @@ public class Kategori {
     private String nama;
     private String deskripsi;
 
+    @Override
+    public String toString() {
+        return nama;
+    }
+
     // CONSTRUCTOR
     public Kategori() {}
 
