@@ -1,6 +1,7 @@
 package admin.kategori;
 
 import admin.kategori.ButtonRenderer;
+import admin.kategori.ButtonEditor; // Pastikan ButtonEditor ada di package yang sama
 import admin.kategori.EditKategoriDialog;
 import admin.kategori.TambahKategoriDialog;
 
@@ -8,6 +9,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.util.List;
 
 public class KelolaKategoriPanel extends JPanel {
 
@@ -58,13 +60,13 @@ public class KelolaKategoriPanel extends JPanel {
         tambahKategoriBtn.setFocusPainted(false);
         tambahKategoriBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
 
-        // --- PERUBAHAN: Memanggil TambahKategoriDialog ---
+        // Memanggil TambahKategoriDialog dan REFRESH data setelahnya
         tambahKategoriBtn.addActionListener(e -> {
             Window owner = SwingUtilities.getWindowAncestor(this);
-            TambahKategoriDialog dialog = new TambahKategoriDialog(owner, model);
+            // Meneruskan referensi model dan panel (this) agar bisa me-load ulang data
+            TambahKategoriDialog dialog = new TambahKategoriDialog(owner, this.model);
             dialog.setVisible(true);
         });
-        // ----------------------------------------------------
 
         header.add(tambahKategoriBtn, BorderLayout.EAST);
 
@@ -77,7 +79,7 @@ public class KelolaKategoriPanel extends JPanel {
         table.setRowHeight(30);
 
         // PENTING: Atur Button Renderer dan Editor untuk kolom "Aksi" (indeks 3)
-        // Catatan: Pastikan ButtonRenderer dan ButtonEditor sudah diupdate untuk mendukung kedua panel!
+        // Catatan: Asumsi ButtonEditor menerima model dan panel (this)
         TableColumn actionColumn = table.getColumnModel().getColumn(3);
         actionColumn.setCellRenderer(new ButtonRenderer());
         actionColumn.setCellEditor(new ButtonEditor(table, model, this));
@@ -93,41 +95,62 @@ public class KelolaKategoriPanel extends JPanel {
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         add(scrollPane, BorderLayout.CENTER);
 
-        // 4. Data Dummy
-        if (model.getRowCount() == 0) {
-            model.addRow(new Object[]{1, "Fiksi", "3 buku", ""});
-            model.addRow(new Object[]{2, "Non-Fiksi", "2 buku", ""});
-            model.addRow(new Object[]{3, "Teknologi", "2 buku", ""});
-            model.addRow(new Object[]{4, "Bisnis", "1 buku", ""});
-        }
-
+        // 4. Panggil method untuk memuat data dari database
+        loadDataFromDatabase();
 
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
     }
 
+    /**
+     * Method untuk memuat data kategori dari database dan menampilkannya di JTable.
+     */
+    public void loadDataFromDatabase() {
+        // Membersihkan data lama
+        model.setRowCount(0);
+
+        // Mengambil data dari database menggunakan model Kategori
+        List<Kategori> listKategori = Kategori.getAllKategori();
+
+        for (Kategori k : listKategori) {
+            // Catatan: Jumlah Buku diisi dengan string statis "N/A" atau hitungan buku yang benar.
+            // Untuk saat ini, kita gunakan string dummy "0 buku" karena logic hitungan buku tidak ada.
+            model.addRow(new Object[]{
+                    k.getId(),
+                    k.getNama(),
+                    "0 buku", // TODO: Ganti dengan query hitungan buku yang sebenarnya
+                    "" // Kolom Aksi
+            });
+        }
+    }
+
     // Method untuk menangani aksi edit kategori (dipanggil dari ButtonEditor)
     public void handleEditAction(int row) {
-        // --- PERUBAHAN: Memanggil EditKategoriDialog ---
+        int idKategori = (int) model.getValueAt(row, 0);
+
         Window owner = SwingUtilities.getWindowAncestor(this);
-        EditKategoriDialog dialog = new EditKategoriDialog(owner, model, row);
-        dialog.setVisible(true);
-        // ---------------------------------------------
+//        EditKategoriDialog dialog = new EditKategoriDialog(owner, idKategori, this);
+//        dialog.setVisible(true);
     }
 
     // Method untuk menangani aksi hapus kategori (dipanggil dari ButtonEditor)
     public void handleDeleteAction(int row) {
-        Object idObj = model.getValueAt(row, 0);
+        int idKategori = (int) model.getValueAt(row, 0);
         String nama = model.getValueAt(row, 1).toString();
 
-        String id = (idObj != null) ? idObj.toString() : "N/A";
-
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Anda yakin ingin menghapus kategori ID " + id + " - " + nama + "?",
+                "Anda yakin ingin menghapus kategori ID " + idKategori + " - " + nama + "?",
                 "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            model.removeRow(row);
-            JOptionPane.showMessageDialog(this, "Kategori ID " + id + " berhasil dihapus.", "Berhasil", JOptionPane.INFORMATION_MESSAGE);
+            boolean success = Kategori.deleteKategori(idKategori);
+
+            if (success) {
+                // Refresh data setelah penghapusan berhasil
+                loadDataFromDatabase();
+                JOptionPane.showMessageDialog(this, "Kategori ID " + idKategori + " berhasil dihapus.", "Berhasil", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal menghapus kategori. Periksa koneksi atau jika kategori masih digunakan oleh buku.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 }

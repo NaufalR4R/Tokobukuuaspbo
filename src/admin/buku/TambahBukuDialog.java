@@ -3,18 +3,27 @@ package admin.buku;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.List;
+
+// Import kelas Kategori dan Buku
+import admin.kategori.Kategori;
+// ASUMSI: Class Buku ada di package models. Silakan sesuaikan jika berbeda.
 
 public class TambahBukuDialog extends JDialog {
 
-    private final KelolaBukuPanel parentPanel; // Ganti DefaultTableModel menjadi KelolaBukuPanel
+    private final KelolaBukuPanel parentPanel;
 
-    // Mapping sederhana untuk Kategori (Asumsi: 1=Fiksi, 2=Non-Fiksi, dst.)
-    private final String[] kategoriOptions = new String[]{"Fiksi", "Non-Fiksi", "Teknologi", "Bisnis", "Lainnya"};
+    // 1. Ganti array String statis dengan List<Kategori> dinamis
+    private List<Kategori> listKategori;
+    // 2. Ganti tipe JComboBox menjadi JComboBox<Kategori>
+    private JComboBox<Kategori> kategoriBox;
 
-    // KORREKSI CONSTRUCTOR: Menerima KelolaBukuPanel
     public TambahBukuDialog(Window owner, KelolaBukuPanel parentPanel) {
         super(owner, "Tambah Buku Baru", ModalityType.APPLICATION_MODAL);
         this.parentPanel = parentPanel;
+
+        // Panggil method untuk memuat data kategori sebelum inisialisasi komponen
+        loadKategoriData();
 
         setLayout(new GridBagLayout());
         if (getContentPane() instanceof JPanel) {
@@ -44,7 +53,7 @@ public class TambahBukuDialog extends JDialog {
         gbc.gridx = 1;
         add(pengarangField, gbc);
 
-        // Penerbit (Ditambahkan karena ada di kelas Buku.java)
+        // Penerbit
         gbc.gridx = 0; gbc.gridy++;
         add(new JLabel("Penerbit"), gbc);
         JTextField penerbitField = new JTextField(20);
@@ -52,10 +61,11 @@ public class TambahBukuDialog extends JDialog {
         add(penerbitField, gbc);
 
 
-        // Kategori
+        // Kategori (Perubahan di sini)
         gbc.gridx = 0; gbc.gridy++;
         add(new JLabel("Kategori"), gbc);
-        JComboBox<String> kategoriBox = new JComboBox<>(kategoriOptions);
+        // Inisialisasi JComboBox dengan List<Kategori> yang sudah dimuat
+        kategoriBox = new JComboBox<>(listKategori.toArray(new Kategori[0]));
         gbc.gridx = 1;
         add(kategoriBox, gbc);
 
@@ -99,9 +109,9 @@ public class TambahBukuDialog extends JDialog {
 
         batalBtn.addActionListener(e -> dispose());
 
-        // LOGIKA BARU: Simpan ke database
+        // LOGIKA BARU: Simpan ke database (Ubah Signature)
         tambahBtn.addActionListener((ActionEvent e) -> {
-            simpanBukuBaru(judulField, pengarangField, penerbitField, kategoriBox, hargaField, stokField, deskripsiArea);
+            simpanBukuBaru(judulField, pengarangField, penerbitField, hargaField, stokField, deskripsiArea);
         });
 
         pack();
@@ -110,32 +120,40 @@ public class TambahBukuDialog extends JDialog {
     }
 
     /**
-     * Konversi Nama Kategori menjadi ID Kategori (Peringatan: Ganti dengan query database kategori yang sebenarnya!)
+     * Memuat data kategori dari database saat dialog diinisialisasi.
      */
-    private int getKategoriIdByName(String namaKategori) {
-        // Ini adalah contoh mapping sederhana:
-        for (int i = 0; i < kategoriOptions.length; i++) {
-            if (kategoriOptions[i].equalsIgnoreCase(namaKategori)) {
-                return i + 1; // Asumsi ID dimulai dari 1
-            }
+    private void loadKategoriData() {
+        // Menggunakan method statis dari kelas Kategori yang sudah tersedia
+        listKategori = Kategori.getAllKategori();
+
+        if (listKategori.isEmpty()) {
+            // Beri peringatan jika tidak ada kategori
+            JOptionPane.showMessageDialog(this,
+                    "Tidak ada data kategori. Harap tambahkan kategori terlebih dahulu.",
+                    "Error Data", JOptionPane.ERROR_MESSAGE);
         }
-        return 0; // ID default
     }
+
+    // Method getKategoriIdByName dihapus karena tidak lagi diperlukan.
 
     /**
      * Logika untuk mengambil data dari form, memvalidasi, membuat objek Buku,
-     * menyimpan ke database, dan me-refresh tabel utama.
+     * menyimpan ke database, dan me-refresh tabel utama. (Ubah Signature)
      */
     private void simpanBukuBaru(
             JTextField judulField, JTextField pengarangField, JTextField penerbitField,
-            JComboBox<String> kategoriBox, JTextField hargaField, JTextField stokField,
+            // JComboBox<String> kategoriBox Dihapus dari argumen
+            JTextField hargaField, JTextField stokField,
             JTextArea deskripsiArea) {
 
         // 1. Ambil dan Bersihkan Data
         String judul = judulField.getText().trim();
         String penulis = pengarangField.getText().trim();
         String penerbit = penerbitField.getText().trim();
-        String kategori = kategoriBox.getSelectedItem().toString();
+
+        // Ambil objek Kategori yang dipilih langsung dari class field JComboBox
+        Kategori kategoriDipilih = (Kategori) kategoriBox.getSelectedItem();
+
         String deskripsi = deskripsiArea.getText().trim();
 
         // Hapus format non-digit ('Rp', titik, koma) dari harga dan stok
@@ -148,30 +166,37 @@ public class TambahBukuDialog extends JDialog {
             return;
         }
 
+        if (kategoriDipilih == null) {
+            JOptionPane.showMessageDialog(this, "Kategori harus dipilih atau tidak ada data kategori.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         double harga;
         int stok;
-        int idKategori;
+        int idKategori = kategoriDipilih.getId(); // Ambil ID Kategori langsung dari objek
 
         try {
             harga = Double.parseDouble(hargaText);
             stok = Integer.parseInt(stokText);
-            idKategori = getKategoriIdByName(kategori);
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Harga dan Stok harus berupa angka yang valid.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         // 3. Buat Objek Buku dan Isi Data
+        // ASUMSI: Class Buku memiliki constructor yang sesuai atau semua setter dipanggil.
+        // Berdasarkan kode Anda yang menggunakan setter:
         Buku bukuBaru = new Buku();
         bukuBaru.setJudul(judul);
         bukuBaru.setPenulis(penulis);
         bukuBaru.setPenerbit(penerbit);
-        bukuBaru.setIdKategori(idKategori);
+        bukuBaru.setIdKategori(idKategori); // Menggunakan ID Kategori yang benar
         bukuBaru.setHarga(harga);
         bukuBaru.setStok(stok);
         bukuBaru.setDeskripsi(deskripsi);
 
         // 4. Panggil CREATE Database
+        // ASUMSI: Method create() di class Buku adalah method untuk menyimpan ke DB.
         if (bukuBaru.create()) {
             JOptionPane.showMessageDialog(this, "Buku '" + judul + "' berhasil ditambahkan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
 
