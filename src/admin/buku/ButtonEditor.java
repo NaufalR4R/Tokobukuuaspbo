@@ -43,7 +43,6 @@ public class ButtonEditor extends AbstractCellEditor implements TableCellEditor,
         deleteButton.setFont(new Font("SansSerif", Font.BOLD, 10));
         deleteButton.setActionCommand("Hapus");
         deleteButton.addActionListener(this);
-
         panel.add(editButton);
         panel.add(deleteButton);
     }

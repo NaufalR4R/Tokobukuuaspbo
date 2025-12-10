@@ -71,20 +71,19 @@ public class KelolaBukuPanel extends JPanel {
 
         add(topContainer, BorderLayout.NORTH);
 
-        // --- Table Setup ---
         table = new JTable(model);
+        table.setRowHeight(30);
         TableColumn actionColumn = table.getColumnModel().getColumn(6);
         actionColumn.setCellRenderer(new ButtonRenderer());
         actionColumn.setCellEditor(new ButtonEditor(table, model, this));
         table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-        table.getColumnModel().getColumn(0).setPreferredWidth(30);
-        table.getColumnModel().getColumn(1).setPreferredWidth(250);
-        table.getColumnModel().getColumn(2).setPreferredWidth(150);
-        table.getColumnModel().getColumn(3).setPreferredWidth(100);
-        table.getColumnModel().getColumn(4).setPreferredWidth(100);
-        table.getColumnModel().getColumn(5).setPreferredWidth(50);
-        actionColumn.setPreferredWidth(160);
-
+        table.getColumnModel().getColumn(0).setPreferredWidth(30); // ID
+        table.getColumnModel().getColumn(1).setPreferredWidth(250); // Judul
+        table.getColumnModel().getColumn(2).setPreferredWidth(150); // Pengarang
+        table.getColumnModel().getColumn(3).setPreferredWidth(100); // Kategori
+        table.getColumnModel().getColumn(4).setPreferredWidth(100); // Harga
+        table.getColumnModel().getColumn(5).setPreferredWidth(50);  // Stok
+        actionColumn.setPreferredWidth(160); // Aksi
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
@@ -98,14 +97,11 @@ public class KelolaBukuPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
     }
 
+    // Method untuk menangani aksi edit
     public void handleEditAction(int row) {
-
-        Object idObj = model.getValueAt(row, 0);
-        String judul = model.getValueAt(row, 1).toString();
-        String id = (idObj != null) ? idObj.toString() : "N/A";
-        JOptionPane.showMessageDialog(this,
-                "Aksi: Buka Dialog Edit Buku dengan ID: " + id + " (" + judul + ")",
-                "Edit", JOptionPane.INFORMATION_MESSAGE);
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        EditBukuDialog dialog = new EditBukuDialog(owner, model, row);
+        dialog.setVisible(true);
     }
 
     // Method untuk menangani aksi hapus (Sama seperti sebelumnya)
