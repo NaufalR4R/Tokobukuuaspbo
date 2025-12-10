@@ -148,8 +148,7 @@ public class KelolaBukuPanel extends JPanel {
     public void handleEditAction(int row) {
         int idBuku = (int) model.getValueAt(row, 0);
         Window owner = SwingUtilities.getWindowAncestor(this);
-        // ASUMSI: EditBukuDialog menerima KelolaBukuPanel (this) agar bisa refresh data
-        EditBukuDialog dialog = new EditBukuDialog(owner, this.model, idBuku);
+        EditBukuDialog dialog = new EditBukuDialog(owner, this, idBuku);
         dialog.setVisible(true);
     }
 
