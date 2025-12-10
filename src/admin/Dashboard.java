@@ -10,6 +10,7 @@ public class Dashboard extends JFrame {
     private JPanel rootPanel;
     private JButton kelolaBukuButton;
     private JButton kelolaKategoriButton;
+    private JButton lihatTransaksiButton;
 
     public Dashboard() {
         setContentPane(rootPanel);
@@ -21,7 +22,6 @@ public class Dashboard extends JFrame {
         kelolaBukuButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // 1. Buat Window (Frame) baru
                 JFrame frameBuku = new JFrame("Kelola Buku");
                 frameBuku.setContentPane(new KelolaBukuPanel());
                 frameBuku.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -43,6 +43,15 @@ public class Dashboard extends JFrame {
         } else {
             System.err.println("Peringatan: kelolaKategoriButton belum terhubung ke GUI.");
         }
+
+        lihatTransaksiButton.addActionListener(e -> {
+            JFrame frameTransaksi = new JFrame("Lihat Transaksi");
+            frameTransaksi.setContentPane(new admin.Transaksi.LihatTransaksiPanel());
+            frameTransaksi.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frameTransaksi.pack();
+            frameTransaksi.setLocationRelativeTo(null);
+            frameTransaksi.setVisible(true);
+        });
     }
 
     public static void main(String[] args) {
