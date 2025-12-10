@@ -8,7 +8,7 @@ import java.awt.event.ActionEvent;
 public class EditBukuDialog extends JDialog {
 
     private final DefaultTableModel model;
-    private final int rowIndex;
+    private final int rowIndex; // Baris yang sedang diedit di JTable
     private final JTextField judulField;
     private final JTextField pengarangField;
     private final JTextField hargaField;
@@ -16,6 +16,7 @@ public class EditBukuDialog extends JDialog {
     private final JComboBox<String> kategoriBox;
     private final JTextArea deskripsiArea;
 
+    // Tambahkan parameter rowIndex untuk tahu data mana yang akan diedit
     public EditBukuDialog(Window owner, DefaultTableModel model, int rowIndex) {
         super(owner, "Edit Detail Buku", ModalityType.APPLICATION_MODAL);
         this.model = model;
@@ -26,8 +27,10 @@ public class EditBukuDialog extends JDialog {
         String currentJudul = model.getValueAt(rowIndex, 1).toString();
         String currentPengarang = model.getValueAt(rowIndex, 2).toString();
         String currentKategori = model.getValueAt(rowIndex, 3).toString();
-        String currentHarga = model.getValueAt(rowIndex, 4).toString().replaceAll("[^\\d]", "").trim();
+        String currentHarga = model.getValueAt(rowIndex, 4).toString().replaceAll("[^\\d]", "").trim(); // Hapus 'Rp' dan titik
         String currentStok = model.getValueAt(rowIndex, 5).toString();
+
+        // Asumsi: Deskripsi tidak disimpan di JTable, jadi kita gunakan string kosong sebagai default
         String currentDeskripsi = "";
 
         setLayout(new GridBagLayout());
@@ -123,12 +126,15 @@ public class EditBukuDialog extends JDialog {
     }
 
     private void simpanPerubahanBuku() {
+        // 1. Ambil dan Bersihkan Data
         String judul = judulField.getText().trim();
         String pengarang = pengarangField.getText().trim();
         String kategori = kategoriBox.getSelectedItem().toString();
+        // Hapus format non-digit ('Rp', titik, koma) dari harga dan stok
         String hargaText = hargaField.getText().trim().replaceAll("[^\\d]", "");
         String stokText = stokField.getText().trim().replaceAll("[^\\d]", "");
 
+        // 2. Validasi Input
         if (judul.isEmpty() || pengarang.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Judul dan Pengarang harus diisi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
@@ -144,14 +150,22 @@ public class EditBukuDialog extends JDialog {
             return;
         }
 
+        // 3. Perbarui Baris di Tabel (Update Row in Model)
+        // Kolom: {"ID", "Judul", "Pengarang", "Kategori", "Harga", "Stok", "Aksi"}
+
+        // ID (Kolom 0) tidak diubah
         model.setValueAt(judul, rowIndex, 1);
         model.setValueAt(pengarang, rowIndex, 2);
         model.setValueAt(kategori, rowIndex, 3);
         model.setValueAt(String.format("Rp %,d", harga), rowIndex, 4); // Re-format harga
         model.setValueAt(stok, rowIndex, 5);
+        // Kolom 6 (Aksi) tetap kosong ("") karena diisi oleh renderer
 
         JOptionPane.showMessageDialog(this, "Buku '" + judul + "' berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
 
+        // 4. Tutup dialog setelah berhasil
         dispose();
+
+        // Logika database: Panggil fungsi untuk update database di sini
     }
 }

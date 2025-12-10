@@ -30,6 +30,19 @@ public class Dashboard extends JFrame {
                 frameBuku.setVisible(true);
             }
         });
+
+        if (kelolaKategoriButton != null) {
+            kelolaKategoriButton.addActionListener(e -> {
+                JFrame frameKategori = new JFrame("Kelola Kategori");
+                frameKategori.setContentPane(new admin.kategori.KelolaKategoriPanel());
+                frameKategori.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frameKategori.pack();
+                frameKategori.setLocationRelativeTo(null);
+                frameKategori.setVisible(true);
+            });
+        } else {
+            System.err.println("Peringatan: kelolaKategoriButton belum terhubung ke GUI.");
+        }
     }
 
     public static void main(String[] args) {
