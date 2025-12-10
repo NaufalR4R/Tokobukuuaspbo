@@ -4,6 +4,7 @@ import java.awt.event.ActionListener;
 import java.sql.*;
 import javax.swing.JOptionPane;
 import admin.Dashboard;
+import utils.Koneksi;
 
 
 public class LoginForm extends JFrame{

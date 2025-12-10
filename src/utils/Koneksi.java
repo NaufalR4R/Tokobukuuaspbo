@@ -1,3 +1,5 @@
+package utils;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -18,10 +20,10 @@ public class Koneksi {
     public static void main(String[] args) {
         try (Connection conn = getConnection()) {
             if (conn != null) {
-                System.out.println("Koneksi ke MySQL berhasil!");
+                System.out.println("utils.Koneksi ke MySQL berhasil!");
             }
         } catch (SQLException e) {
-            System.out.println("Koneksi gagal: " + e.getMessage());
+            System.out.println("utils.Koneksi gagal: " + e.getMessage());
         }
     }
 }
