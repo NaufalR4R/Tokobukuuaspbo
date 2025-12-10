@@ -1,5 +1,6 @@
 package admin;
 
+import admin.Pengguna.KelolaPenggunaPanel;
 import admin.buku.KelolaBukuPanel;
 
 import javax.swing.*;
@@ -11,6 +12,7 @@ public class Dashboard extends JFrame {
     private JButton kelolaBukuButton;
     private JButton kelolaKategoriButton;
     private JButton lihatTransaksiButton;
+    private JButton kelolaPenggunaButton;
 
     public Dashboard() {
         setContentPane(rootPanel);
@@ -30,19 +32,15 @@ public class Dashboard extends JFrame {
                 frameBuku.setVisible(true);
             }
         });
+        kelolaKategoriButton.addActionListener(e -> {
+            JFrame frameKategori = new JFrame("Kelola Kategori");
+            frameKategori.setContentPane(new admin.kategori.KelolaKategoriPanel());
+            frameKategori.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frameKategori.pack();
+            frameKategori.setLocationRelativeTo(null);
+            frameKategori.setVisible(true);
+        });
 
-        if (kelolaKategoriButton != null) {
-            kelolaKategoriButton.addActionListener(e -> {
-                JFrame frameKategori = new JFrame("Kelola Kategori");
-                frameKategori.setContentPane(new admin.kategori.KelolaKategoriPanel());
-                frameKategori.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frameKategori.pack();
-                frameKategori.setLocationRelativeTo(null);
-                frameKategori.setVisible(true);
-            });
-        } else {
-            System.err.println("Peringatan: kelolaKategoriButton belum terhubung ke GUI.");
-        }
 
         lihatTransaksiButton.addActionListener(e -> {
             JFrame frameTransaksi = new JFrame("Lihat Transaksi");
@@ -51,6 +49,15 @@ public class Dashboard extends JFrame {
             frameTransaksi.pack();
             frameTransaksi.setLocationRelativeTo(null);
             frameTransaksi.setVisible(true);
+        });
+
+        kelolaPenggunaButton.addActionListener(e -> {
+                JFrame framePengguna = new JFrame("Kelola Pengguna");
+                framePengguna.setContentPane(new admin.Pengguna.KelolaPenggunaPanel());
+                framePengguna.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                framePengguna.pack();
+                framePengguna.setLocationRelativeTo(null);
+                framePengguna.setVisible(true);;
         });
     }
 
