@@ -5,7 +5,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-import admin.kategori.Kategori;
+import model.Buku;
+import model.Kategori;
 
 public class EditBukuDialog extends JDialog {
 

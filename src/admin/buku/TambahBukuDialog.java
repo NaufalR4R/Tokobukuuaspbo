@@ -6,7 +6,8 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 
 // Import kelas Kategori dan Buku
-import admin.kategori.Kategori;
+import model.Buku;
+import model.Kategori;
 // ASUMSI: Class Buku ada di package models. Silakan sesuaikan jika berbeda.
 
 public class TambahBukuDialog extends JDialog {

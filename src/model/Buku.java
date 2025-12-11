@@ -1,4 +1,4 @@
-package admin.buku;
+package model;
 import utils.Koneksi;
 import java.sql.*;
 import java.util.ArrayList;

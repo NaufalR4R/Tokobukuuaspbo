@@ -1,5 +1,7 @@
 package admin.kategori;
 
+import model.Kategori;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;

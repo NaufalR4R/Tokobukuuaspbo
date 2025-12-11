@@ -1,4 +1,4 @@
-package admin.kategori;
+package model;
 
 import java.sql.*;
 import java.util.ArrayList;

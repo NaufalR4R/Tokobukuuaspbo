@@ -7,9 +7,10 @@ import java.awt.*;
 import java.util.ArrayList;
 
 // Import kelas Kategori dan Buku
-import admin.kategori.Kategori;
+import model.Buku;
+import model.Kategori;
 // ASUMSI: Class Buku ada di package models. Silakan sesuaikan jika berbeda.
-import admin.buku.Buku;
+
 
 public class KelolaBukuPanel extends JPanel {
 

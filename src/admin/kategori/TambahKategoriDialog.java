@@ -1,5 +1,7 @@
 package admin.kategori;
 
+import model.Kategori;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
