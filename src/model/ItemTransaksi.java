@@ -72,9 +72,14 @@ public class ItemTransaksi {
     }
 
     //  GET ALL BY TRANSAKSI
-    public static List<ItemTransaksi> getByTransaksi(int transaksiId) {
-        List<ItemTransaksi> items = new ArrayList<>();
-        String query = "SELECT * FROM item_transaksi WHERE id_transaksi=?";
+    public static List<ItemDetail> getDetailByTransaksi(int transaksiId) {
+        List<ItemDetail> items = new ArrayList<>();
+
+        // Query dengan JOIN ke tabel buku untuk mendapatkan judul
+        String query = "SELECT it.jumlah, it.harga_item, b.judul " +
+                "FROM item_transaksi it " +
+                "JOIN buku b ON it.id_buku = b.id " +
+                "WHERE it.id_transaksi = ?";
 
         try (Connection conn = Koneksi.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
@@ -83,17 +88,20 @@ public class ItemTransaksi {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                items.add(new ItemTransaksi(
-                        rs.getInt("id"),
-                        rs.getInt("id_transaksi"),
-                        rs.getInt("id_buku"),
-                        rs.getInt("jumlah"),
-                        rs.getDouble("harga_item")
+                int jumlah = rs.getInt("jumlah");
+                double hargaItem = rs.getDouble("harga_item");
+                double subTotal = jumlah * hargaItem; // Hitung subtotal
+
+                items.add(new ItemDetail(
+                        rs.getString("judul"),
+                        jumlah,
+                        hargaItem,
+                        subTotal
                 ));
             }
 
         } catch (SQLException e) {
-            System.out.println("Error getByTransaksi: " + e.getMessage());
+            System.out.println("Error getDetailByTransaksi: " + e.getMessage());
         }
         return items;
     }

@@ -3,55 +3,82 @@ package admin.Transaksi;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+import model.Transaksi;
+import model.ItemTransaksi;
+import model.ItemDetail;
 
 public class DetailTransaksiDialog extends JDialog {
 
-    private final DefaultTableModel detailModel;
-    private final JTable detailTable;
+    private DefaultTableModel detailModel;
+    private JTable detailTable;
+    private final Transaksi transaksiData;
+    private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
 
-    public DetailTransaksiDialog(Window owner, String idTransaksi) {
-        super(owner, "Detail Transaksi #" + idTransaksi, ModalityType.APPLICATION_MODAL);
+    public DetailTransaksiDialog(Window owner, String idTransaksiStr) {
+        super(owner, "Detail Transaksi #" + idTransaksiStr, ModalityType.APPLICATION_MODAL);
+
+        int idTransaksi;
+        try {
+            idTransaksi = Integer.parseInt(idTransaksiStr);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(owner, "ID Transaksi tidak valid.", "Error", JOptionPane.ERROR_MESSAGE);
+            this.transaksiData = null;
+            dispose();
+            return;
+        }
+
+        // --- 1. Ambil Data Transaksi Utama ---
+        this.transaksiData = Transaksi.getById(idTransaksi);
+
+        if (transaksiData == null) {
+            JOptionPane.showMessageDialog(owner, "Data transaksi ID " + idTransaksi + " tidak ditemukan.", "Error", JOptionPane.ERROR_MESSAGE);
+            dispose();
+            return;
+        }
+        String tglStr = transaksiData.getCreatedAt() != null ?
+                new SimpleDateFormat("dd MMMM yyyy HH:mm:ss").format(transaksiData.getCreatedAt()) :
+                "N/A";
+        String userStr = transaksiData.getNama() + " (ID: " + transaksiData.getUserId() + ")";
+        String totalStr = currencyFormat.format(transaksiData.getHargaTotal());
+        String bayarStr = currencyFormat.format(transaksiData.getJumlahBayar());
+        String kembalianStr = currencyFormat.format(transaksiData.getJumlahKembalian());
+
 
         setLayout(new BorderLayout(15, 15));
         if (getContentPane() instanceof JPanel) {
             getContentPane().setBackground(new Color(250, 247, 243));
         }
 
-        // --- 1. Panel Ringkasan Transaksi (NORTH) ---
-        JPanel summaryPanel = new JPanel(new GridLayout(4, 2, 10, 5));
+        // --- Panel Ringkasan Transaksi ---
+        JPanel summaryPanel = new JPanel(new GridLayout(5, 2, 10, 5));
         summaryPanel.setBorder(BorderFactory.createTitledBorder("Ringkasan Transaksi"));
         summaryPanel.setBackground(new Color(250, 247, 243));
 
-        // Data Dummy Ringkasan (Anda akan mengganti ini dengan data aktual dari database)
-        String tgl = new SimpleDateFormat("dd MMMM yyyy HH:mm:ss").format(new Date());
-        String user = "Admin (ID: 1)";
-        String total = "Rp 160.000";
-        String kembalian = "Rp 40.000";
-
         summaryPanel.add(new JLabel("ID Transaksi:"));
-        summaryPanel.add(new JLabel(idTransaksi));
+        summaryPanel.add(new JLabel(idTransaksiStr));
         summaryPanel.add(new JLabel("Waktu:"));
-        summaryPanel.add(new JLabel(tgl));
-        summaryPanel.add(new JLabel("User:"));
-        summaryPanel.add(new JLabel(user));
+        summaryPanel.add(new JLabel(tglStr));
+        summaryPanel.add(new JLabel("Pegawai:"));
+        summaryPanel.add(new JLabel(userStr));
+        summaryPanel.add(new JLabel("Dibayar:"));
+        summaryPanel.add(new JLabel(bayarStr));
         summaryPanel.add(new JLabel("Kembalian:"));
-        summaryPanel.add(new JLabel(kembalian));
+        summaryPanel.add(new JLabel(kembalianStr));
 
         add(summaryPanel, BorderLayout.NORTH);
 
-        // --- 2. Panel Detail Item (CENTER) ---
-
-        // Model untuk detail item
+        // --- Panel Detail Item ---
         String[] detailColumns = {"Judul Buku", "Harga Satuan", "Qty", "Subtotal"};
         detailModel = new DefaultTableModel(detailColumns, 0);
         detailTable = new JTable(detailModel);
 
-        // Data Dummy Item (Anda akan mengganti ini dengan hasil query detail transaksi)
-        detailModel.addRow(new Object[]{"Laskar Pelangi", "Rp 85.000", 1, "Rp 85.000"});
-        detailModel.addRow(new Object[]{"Bumi Manusia", "Rp 75.000", 1, "Rp 75.000"});
-        // Total: 160.000
+        // 2. Muat Data Detail Item dari Database
+        loadItemDetails(idTransaksi);
 
         detailTable.setRowHeight(25);
         detailTable.getColumnModel().getColumn(0).setPreferredWidth(200);
@@ -61,12 +88,12 @@ public class DetailTransaksiDialog extends JDialog {
 
         add(scrollPane, BorderLayout.CENTER);
 
-        // --- 3. Panel Footer (SOUTH) ---
+        // --- Panel Footer ---
         JPanel footerPanel = new JPanel(new BorderLayout());
         footerPanel.setBackground(new Color(250, 247, 243));
 
         // Total Pembelian Final
-        JLabel totalLabel = new JLabel("TOTAL: " + total, SwingConstants.RIGHT);
+        JLabel totalLabel = new JLabel("TOTAL: " + totalStr, SwingConstants.RIGHT);
         totalLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
         footerPanel.add(totalLabel, BorderLayout.CENTER);
 
@@ -78,7 +105,6 @@ public class DetailTransaksiDialog extends JDialog {
         buttonWrapper.setBackground(new Color(250, 247, 243));
         buttonWrapper.add(closeBtn);
 
-        // Gabungkan total dan tombol
         JPanel southPanel = new JPanel(new BorderLayout());
         southPanel.setBackground(new Color(250, 247, 243));
         southPanel.add(footerPanel, BorderLayout.NORTH);
@@ -91,6 +117,25 @@ public class DetailTransaksiDialog extends JDialog {
         pack();
         setMinimumSize(new Dimension(550, 450));
         setLocationRelativeTo(owner);
+    }
+
+    // Mengambil detail item dari database dan mengisi detailModel.
+    private void loadItemDetails(int idTransaksi) {
+        detailModel.setRowCount(0);
+
+        List<ItemDetail> items = ItemTransaksi.getDetailByTransaksi(idTransaksi);
+
+        for (ItemDetail item : items) {
+            String hargaSatuanStr = currencyFormat.format(item.hargaSatuan);
+            String subtotalStr = currencyFormat.format(item.subtotal);
+
+            detailModel.addRow(new Object[]{
+                    item.judulBuku,
+                    hargaSatuanStr,
+                    item.jumlah,
+                    subtotalStr
+            });
+        }
     }
 
     // Method untuk mengatur padding di JDialog

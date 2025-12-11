@@ -4,11 +4,21 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Locale;
+
+// Import Transaksi model
+import model.Transaksi;
+
+// Catatan: Anda perlu memastikan DetailTransaksiDialog sudah ada di package admin.Transaksi.
 
 public class LihatTransaksiPanel extends JPanel {
 
     private final DefaultTableModel model;
     private final JTable table;
+    // Format mata uang Rupiah
+    private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
 
     public LihatTransaksiPanel() {
         // --- Setup Panel ---
@@ -16,8 +26,7 @@ public class LihatTransaksiPanel extends JPanel {
         setBackground(new Color(250, 247, 243));
 
         // 1. Inisialisasi Model Tabel Transaksi
-        // Kita menggunakan kolom database yang relevan + informasi tambahan (user) dan Aksi
-        String[] columns = {"ID Transaksi", "ID User", "Waktu Transaksi", "Total Harga", "Bayar", "Kembalian", "Aksi"};
+        String[] columns = {"ID Transaksi", "Nama Pegawai", "Waktu Transaksi", "Total Harga", "Bayar", "Kembalian", "Aksi"};
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -26,7 +35,7 @@ public class LihatTransaksiPanel extends JPanel {
             }
             @Override
             public Class<?> getColumnClass(int columnIndex) {
-                if (columnIndex == 0 || columnIndex == 1) { // ID Transaksi dan ID User
+                if (columnIndex == 0) {
                     return Integer.class;
                 }
                 return String.class;
@@ -37,7 +46,6 @@ public class LihatTransaksiPanel extends JPanel {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(new Color(250, 247, 243));
 
-        // Title
         JPanel titlePanel = new JPanel(new GridLayout(2, 1));
         titlePanel.setBackground(new Color(250, 247, 243));
         JLabel title = new JLabel("Lihat Transaksi");
@@ -48,39 +56,19 @@ public class LihatTransaksiPanel extends JPanel {
         titlePanel.add(subtitle);
         header.add(titlePanel, BorderLayout.WEST);
 
-        // --- Search Panel (Tambahkan Filter/Search) ---
-        JPanel searchPanel = new JPanel(new BorderLayout(8, 8));
-        searchPanel.setBackground(new Color(250, 247, 243));
-        JTextField searchField = new JTextField("Cari berdasarkan ID atau tanggal...");
-        JButton filterBtn = new JButton("Filter Tanggal");
-        searchPanel.add(searchField, BorderLayout.CENTER);
-        searchPanel.add(filterBtn, BorderLayout.EAST);
-
         JPanel topContainer = new JPanel(new BorderLayout(0, 10));
         topContainer.setBackground(new Color(250, 247, 243));
         topContainer.add(header, BorderLayout.NORTH);
-        topContainer.add(searchPanel, BorderLayout.SOUTH);
 
         add(topContainer, BorderLayout.NORTH);
 
         // 3. Setup Tabel
         table = new JTable(model);
-
-        // Mengatur ketinggian baris
         table.setRowHeight(30);
 
-        // Kolom Aksi (Detail)
         TableColumn actionColumn = table.getColumnModel().getColumn(6);
-
-        // Catatan: Karena tombolnya hanya satu ('Detail'), kita tidak bisa menggunakan ButtonRenderer/Editor yang lama
-        // Kita akan menggunakan logika sederhana untuk tombol Detail.
-        // Untuk saat ini, kita akan biarkan sebagai kolom String biasa (tanpa tombol fungsional)
-        // Jika Anda ingin tombol, kita perlu membuat ButtonRenderer/Editor baru yang hanya menampilkan satu tombol.
-        // Sementara itu, kita gunakan placeholder:
-
         actionColumn.setPreferredWidth(80);
 
-        // Mengatur lebar kolom lainnya
         table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
         table.getColumnModel().getColumn(0).setPreferredWidth(80);  // ID Transaksi
         table.getColumnModel().getColumn(1).setPreferredWidth(80);  // ID User
@@ -93,29 +81,12 @@ public class LihatTransaksiPanel extends JPanel {
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         add(scrollPane, BorderLayout.CENTER);
 
-        // 4. Data Dummy (Sesuai Struktur Database)
-        model.addRow(new Object[]{
-                101,
-                1,
-                "2025-12-10 15:30:00",
-                "Rp 160.000",
-                "Rp 200.000",
-                "Rp 40.000",
-                "Detail" // Aksi Placeholder
-        });
-        model.addRow(new Object[]{
-                102,
-                2,
-                "2025-12-10 16:15:00",
-                "Rp 70.000",
-                "Rp 70.000",
-                "Rp 0",
-                "Detail"
-        });
+        // 4. Muat Data dari Database
+        loadDataFromDatabase();
 
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
-        // Tambahkan listener untuk aksi klik Detail (jika menggunakan String "Detail" sebagai placeholder)
+        // Tambahkan listener untuk aksi klik Detail
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -128,17 +99,39 @@ public class LihatTransaksiPanel extends JPanel {
         });
     }
 
+     // Memuat data transaksi dari database dan mengisi JTable.
+    public void loadDataFromDatabase() {
+        model.setRowCount(0);
+        List<Transaksi> listTransaksi = Transaksi.getAll();
+
+        for (Transaksi t : listTransaksi) {
+            // Format harga ke Rupiah
+            String totalHarga = currencyFormat.format(t.getHargaTotal());
+            String jumlahBayar = currencyFormat.format(t.getJumlahBayar());
+            String kembalian = currencyFormat.format(t.getJumlahKembalian());
+
+            // Format Timestamp ke String
+            String waktuTransaksi = t.getCreatedAt() != null ? t.getCreatedAt().toString().substring(0, 19) : "-";
+
+            model.addRow(new Object[]{
+                    t.getId(),
+                    t.getNama(),
+                    waktuTransaksi,
+                    totalHarga,
+                    jumlahBayar,
+                    kembalian,
+                    "Detail"
+            });
+        }
+    }
+
+
     public void handleDetailAction(int row) {
-        // Pastikan ID Transaksi adalah String
-        String idTransaksi = model.getValueAt(row, 0).toString();
+        String idTransaksiStr = model.getValueAt(row, 0).toString();
 
-        // 1. Ambil Window parent
         Window owner = SwingUtilities.getWindowAncestor(this);
+        DetailTransaksiDialog dialog = new DetailTransaksiDialog(owner, idTransaksiStr);
 
-        // 2. Panggil DetailTransaksiDialog dengan ID Transaksi
-        DetailTransaksiDialog dialog = new DetailTransaksiDialog(owner, idTransaksi);
-
-        // 3. Tampilkan dialog
         dialog.setVisible(true);
     }
 

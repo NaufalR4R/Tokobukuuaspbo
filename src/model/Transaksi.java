@@ -12,16 +12,21 @@ public class Transaksi {
     private double hargaTotal;
     private double jumlahBayar;
     private double jumlahKembalian;
+    private Timestamp created_at;
+    private String nama;
 
     //  CONSTRUCTOR
     public Transaksi() {}
 
-    public Transaksi(int id, int userId, double hargaTotal, double jumlahBayar, double jumlahKembalian) {
+    // UPDATED CONSTRUCTOR
+    public Transaksi(int id, int userId, double hargaTotal, double jumlahBayar, double jumlahKembalian, Timestamp created_at, String nama) {
         this.id = id;
         this.userId = userId;
         this.hargaTotal = hargaTotal;
         this.jumlahBayar = jumlahBayar;
         this.jumlahKembalian = jumlahKembalian;
+        this.created_at = created_at;
+        this.nama = nama;
     }
 
     //  GETTER - SETTER
@@ -30,14 +35,18 @@ public class Transaksi {
     public double getHargaTotal() { return hargaTotal; }
     public double getJumlahBayar() { return jumlahBayar; }
     public double getJumlahKembalian() { return jumlahKembalian; }
+    public Timestamp getCreatedAt() { return created_at; }
+    public String getNama() { return nama; }
 
     public void setId(int id) { this.id = id; }
     public void setUserId(int userId) { this.userId = userId; }
     public void setHargaTotal(double hargaTotal) { this.hargaTotal = hargaTotal; }
     public void setJumlahBayar(double jumlahBayar) { this.jumlahBayar = jumlahBayar; }
     public void setJumlahKembalian(double jumlahKembalian) { this.jumlahKembalian = jumlahKembalian; }
+    public void setCreatedAt(Timestamp created_at) { this.created_at = created_at; }
+    public void setUserName(String nama) { this.nama = nama; }
 
-    //  CREATE (INSERT)
+    //  CREATE
     public boolean create() {
         String query = "INSERT INTO transaksi (id_pelanggan, user_id, harga_total, jumlah_bayar, jumlah_kembalian) VALUES (NULL, ?, ?, ?, ?)";
 
@@ -62,10 +71,12 @@ public class Transaksi {
         return false;
     }
 
-    //  READ (GET ALL)
+    //  READ
     public static List<Transaksi> getAll() {
         List<Transaksi> list = new ArrayList<>();
-        String query = "SELECT * FROM transaksi ORDER BY id DESC";
+        // Query dengan JOIN users untuk mendapatkan nama
+        String query = "SELECT t.id, t.user_id, t.harga_total, t.jumlah_bayar, t.jumlah_kembalian, t.created_at, u.nama_lengkap AS nama " +
+                "FROM transaksi t JOIN users u ON t.user_id = u.id ORDER BY t.id DESC";
 
         try (Connection conn = Koneksi.getConnection();
              Statement st = conn.createStatement();
@@ -77,7 +88,9 @@ public class Transaksi {
                         rs.getInt("user_id"),
                         rs.getDouble("harga_total"),
                         rs.getDouble("jumlah_bayar"),
-                        rs.getDouble("jumlah_kembalian")
+                        rs.getDouble("jumlah_kembalian"),
+                        rs.getTimestamp("created_at"),
+                        rs.getString("nama")
                 ));
             }
 
@@ -85,6 +98,35 @@ public class Transaksi {
             System.out.println("Error getAll transaksi: " + e.getMessage());
         }
         return list;
+    }
+
+    // Get By ID - dengan JOIN ke tabel users untuk get nama user
+    public static Transaksi getById(int idTransaksi) {
+        String query = "SELECT t.id, t.user_id, t.harga_total, t.jumlah_bayar, t.jumlah_kembalian, t.created_at, u.nama_lengkap AS nama " +
+                "FROM transaksi t JOIN users u ON t.user_id = u.id WHERE t.id = ?";
+
+        try (Connection conn = Koneksi.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+
+            ps.setInt(1, idTransaksi);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new Transaksi(
+                        rs.getInt("id"),
+                        rs.getInt("user_id"),
+                        rs.getDouble("harga_total"),
+                        rs.getDouble("jumlah_bayar"),
+                        rs.getDouble("jumlah_kembalian"),
+                        rs.getTimestamp("created_at"),
+                        rs.getString("nama")
+                );
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error getById transaksi: " + e.getMessage());
+        }
+        return null;
     }
 
     //  UPDATE
