@@ -14,16 +14,29 @@ public class User {
     private String namaLengkap;
     private String password;
     private String role;
+    private Timestamp created_at;
 
     // CONSTRUCTORS
     public User() {}
 
-    public User(int id, String username, String namaLengkap, String password, String role) {
+    // Constructor untuk data lengkap (termasuk password)
+    public User(int id, String username, String namaLengkap, String password, String role, Timestamp created_at) {
         this.id = id;
         this.username = username;
         this.namaLengkap = namaLengkap;
         this.password = password;
         this.role = role;
+        this.created_at = created_at;
+    }
+
+    // Constructor untuk data tampilan (tanpa password)
+    public User(int id, String username, String namaLengkap, String role, Timestamp created_at) {
+        this.id = id;
+        this.username = username;
+        this.namaLengkap = namaLengkap;
+        this.role = role;
+        this.created_at = created_at;
+        this.password = null;
     }
 
     // GETTERS & SETTERS
@@ -41,6 +54,9 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public Timestamp getCreatedAt() { return created_at; }
+    public void setCreatedAt(Timestamp created_at) { this.created_at = created_at; }
 
     // CREATE USER
     public boolean createUser() {
@@ -103,7 +119,8 @@ public class User {
     // GET ALL USERS
     public static List<User> getAllUsers() {
         List<User> list = new ArrayList<>();
-        String query = "SELECT * FROM users ORDER BY id DESC";
+        // Ambil created_at
+        String query = "SELECT id, username, nama_lengkap, role, created_at FROM users ORDER BY id DESC";
 
         try (Connection conn = Koneksi.getConnection();
              Statement stmt = conn.createStatement();
@@ -114,8 +131,8 @@ public class User {
                         rs.getInt("id"),
                         rs.getString("username"),
                         rs.getString("nama_lengkap"),
-                        rs.getString("password"),
-                        rs.getString("role")
+                        rs.getString("role"),
+                        rs.getTimestamp("created_at")
                 ));
             }
 
@@ -128,7 +145,8 @@ public class User {
 
     // GET USER BY ID
     public static User getUserById(int userId) {
-        String query = "SELECT * FROM users WHERE id=?";
+        // Ambil created_at
+        String query = "SELECT id, username, nama_lengkap, password, role, created_at FROM users WHERE id=?";
 
         try (Connection conn = Koneksi.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -142,7 +160,8 @@ public class User {
                         rs.getString("username"),
                         rs.getString("nama_lengkap"),
                         rs.getString("password"),
-                        rs.getString("role")
+                        rs.getString("role"),
+                        rs.getTimestamp("created_at") // Ambil created_at
                 );
             }
 

@@ -4,11 +4,18 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.util.List;
+import java.text.SimpleDateFormat;
+
+import model.User;
+
 
 public class KelolaPenggunaPanel extends JPanel {
 
     private final DefaultTableModel model;
     private final JTable table;
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
 
     public KelolaPenggunaPanel() {
         // --- Setup Panel ---
@@ -16,12 +23,10 @@ public class KelolaPenggunaPanel extends JPanel {
         setBackground(new Color(250, 247, 243));
 
         // 1. Inisialisasi Model Tabel Pengguna
-        // Kolom diambil dari struktur tabel 'user': id, username, nama_lengkap, role, created_at, Aksi
         String[] columns = {"ID", "Username", "Nama Lengkap", "Role", "Tanggal Buat", "Aksi"};
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
-                // Hanya kolom "Aksi" (indeks 5) yang bisa diedit (untuk tombol)
                 return col == 5;
             }
             @Override
@@ -33,7 +38,7 @@ public class KelolaPenggunaPanel extends JPanel {
             }
         };
 
-        // 2. Header dan Tombol Tambah
+        // 2. Header dan Tombol Tambah (Tidak Berubah)
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(new Color(250, 247, 243));
 
@@ -55,13 +60,16 @@ public class KelolaPenggunaPanel extends JPanel {
         tambahPenggunaBtn.setFocusPainted(false);
         tambahPenggunaBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
 
-        // --- LOGIKA: Memanggil TambahPenggunaDialog ---
+        // LOGIKA Tambah Pengguna:
         tambahPenggunaBtn.addActionListener(e -> {
             Window owner = SwingUtilities.getWindowAncestor(this);
-            TambahPenggunaDialog dialog = new TambahPenggunaDialog(owner, model);
-            dialog.setVisible(true);
+            // Anda harus membuat kelas TambahPenggunaDialog
+            // TambahPenggunaDialog dialog = new TambahPenggunaDialog(owner, this);
+            // dialog.setVisible(true);
+
+            JOptionPane.showMessageDialog(this, "Silakan buat kelas TambahPenggunaDialog", "Info", JOptionPane.INFORMATION_MESSAGE);
+            loadDataFromDatabase();
         });
-        // ----------------------------------------------------
 
         header.add(tambahPenggunaBtn, BorderLayout.EAST);
 
@@ -70,6 +78,10 @@ public class KelolaPenggunaPanel extends JPanel {
         searchPanel.setBackground(new Color(250, 247, 243));
         JTextField searchField = new JTextField("Cari berdasarkan username atau nama lengkap...");
         JButton refreshBtn = new JButton("Refresh");
+
+        // LOGIKA: Refresh data
+        refreshBtn.addActionListener(e -> loadDataFromDatabase());
+
         searchPanel.add(searchField, BorderLayout.CENTER);
         searchPanel.add(refreshBtn, BorderLayout.EAST);
 
@@ -82,51 +94,73 @@ public class KelolaPenggunaPanel extends JPanel {
 
         // 3. Setup Tabel
         table = new JTable(model);
-
-        // Mengatur ketinggian baris agar tombol muat
         table.setRowHeight(30);
 
-        // PENTING: Atur Button Renderer dan Editor untuk kolom "Aksi" (indeks 5)
         TableColumn actionColumn = table.getColumnModel().getColumn(5);
+
+        // PENTING: Menggunakan ButtonRenderer dan ButtonEditor eksternal
         actionColumn.setCellRenderer(new ButtonRenderer());
-        // Menggunakan 'this' agar ButtonEditor bisa memanggil handleAction di kelas ini
-        actionColumn.setCellEditor(new ButtonEditor(table, model, this));
+        actionColumn.setCellEditor(new ButtonEditor(table, model, this)); // Pastikan constructor ButtonEditor menerima KelolaPenggunaPanel
 
         // Mengatur lebar kolom
         table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-        table.getColumnModel().getColumn(0).setPreferredWidth(30);  // ID
-        table.getColumnModel().getColumn(1).setPreferredWidth(120); // Username
-        table.getColumnModel().getColumn(2).setPreferredWidth(200); // Nama Lengkap
-        table.getColumnModel().getColumn(3).setPreferredWidth(80);  // Role
-        table.getColumnModel().getColumn(4).setPreferredWidth(150); // Tanggal Buat
-        actionColumn.setPreferredWidth(120);                       // Aksi (Edit/Hapus)
+        table.getColumnModel().getColumn(0).setPreferredWidth(30);
+        table.getColumnModel().getColumn(1).setPreferredWidth(120);
+        table.getColumnModel().getColumn(2).setPreferredWidth(200);
+        table.getColumnModel().getColumn(3).setPreferredWidth(80);
+        table.getColumnModel().getColumn(4).setPreferredWidth(150);
+        actionColumn.setPreferredWidth(120);
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         add(scrollPane, BorderLayout.CENTER);
 
-        // 4. Data Dummy
-        if (model.getRowCount() == 0) {
-            model.addRow(new Object[]{1, "admin_user", "Budi Santoso", "admin", "2025-01-01 10:00:00", ""});
-            model.addRow(new Object[]{2, "kasir_andi", "Andi Pratama", "cashier", "2025-01-05 11:30:00", ""});
-            model.addRow(new Object[]{3, "kasir_siti", "Siti Aisyah", "cashier", "2025-02-10 09:00:00", ""});
-        }
+        // 4. Muat Data dari Database
+        loadDataFromDatabase();
 
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
     }
 
-    // Method untuk menangani aksi edit pengguna (Dipanggil dari ButtonEditor)
-    public void handleEditAction(int row) {
-        // --- LOGIKA: Memanggil EditPenggunaDialog ---
-        Window owner = SwingUtilities.getWindowAncestor(this);
-        EditPenggunaDialog dialog = new EditPenggunaDialog(owner, model, row);
-        dialog.setVisible(true);
-        // ---------------------------------------------
+    // Memuat data pengguna dari database dan mengisi JTable.
+    public void loadDataFromDatabase() {
+        model.setRowCount(0);
+        List<User> userList = User.getAllUsers();
+
+        for (User user : userList) {
+            String createdDateStr = user.getCreatedAt() != null ?
+                    dateFormat.format(user.getCreatedAt()) :
+                    "-";
+
+            model.addRow(new Object[]{
+                    user.getId(),
+                    user.getUsername(),
+                    user.getNamaLengkap(),
+                    user.getRole(),
+                    createdDateStr,
+                    "" // Placeholder untuk tombol Aksi
+            });
+        }
     }
 
-    // Method untuk menangani aksi hapus pengguna (Dipanggil dari ButtonEditor)
+    // Method untuk menangani aksi edit pengguna
+    public void handleEditAction(int row) {
+        String idStr = model.getValueAt(row, 0).toString();
+        int id = Integer.parseInt(idStr);
+
+        Window owner = SwingUtilities.getWindowAncestor(this);
+
+        // Anda harus membuat kelas EditPenggunaDialog
+        // EditPenggunaDialog dialog = new EditPenggunaDialog(owner, this, id);
+        // dialog.setVisible(true);
+
+        JOptionPane.showMessageDialog(this, "Silakan buat kelas EditPenggunaDialog untuk ID: " + id, "Info", JOptionPane.INFORMATION_MESSAGE);
+        loadDataFromDatabase();
+    }
+
+    // Method untuk menangani aksi hapus pengguna
     public void handleDeleteAction(int row) {
-        String id = model.getValueAt(row, 0).toString();
+        String idStr = model.getValueAt(row, 0).toString();
+        int id = Integer.parseInt(idStr);
         String username = model.getValueAt(row, 1).toString();
 
         int confirm = JOptionPane.showConfirmDialog(this,
@@ -134,8 +168,14 @@ public class KelolaPenggunaPanel extends JPanel {
                 "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            model.removeRow(row);
-            JOptionPane.showMessageDialog(this, "Pengguna ID " + id + " berhasil dihapus.", "Berhasil", JOptionPane.INFORMATION_MESSAGE);
+            // LOGIKA: Panggil method delete dari model
+            if (User.deleteUser(id)) {
+                // Hapus baris dari tabel jika penghapusan di DB berhasil
+                model.removeRow(row);
+                JOptionPane.showMessageDialog(this, "Pengguna ID " + id + " berhasil dihapus.", "Berhasil", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                // Pesan error dari DB sudah ditangani di model.User.java
+            }
         }
     }
 }
