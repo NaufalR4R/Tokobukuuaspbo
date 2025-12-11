@@ -83,9 +83,8 @@ public class KelolaPenggunaPanel extends JPanel {
 
         TableColumn actionColumn = table.getColumnModel().getColumn(5);
 
-        // PENTING: Menggunakan ButtonRenderer dan ButtonEditor eksternal
         actionColumn.setCellRenderer(new ButtonRenderer());
-        actionColumn.setCellEditor(new ButtonEditor(table, model, this)); // Pastikan constructor ButtonEditor menerima KelolaPenggunaPanel
+        actionColumn.setCellEditor(new ButtonEditor(table, model, this));
 
         // Mengatur lebar kolom
         table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
@@ -129,16 +128,10 @@ public class KelolaPenggunaPanel extends JPanel {
 
     // Method untuk menangani aksi edit pengguna
     public void handleEditAction(int row) {
-        String idStr = model.getValueAt(row, 0).toString();
-        int id = Integer.parseInt(idStr);
-
         Window owner = SwingUtilities.getWindowAncestor(this);
+        EditPenggunaDialog dialog = new EditPenggunaDialog(owner, model, row);
 
-        // Anda harus membuat kelas EditPenggunaDialog
-        // EditPenggunaDialog dialog = new EditPenggunaDialog(owner, this, id);
-        // dialog.setVisible(true);
-
-        JOptionPane.showMessageDialog(this, "Silakan buat kelas EditPenggunaDialog untuk ID: " + id, "Info", JOptionPane.INFORMATION_MESSAGE);
+        dialog.setVisible(true);
         loadDataFromDatabase();
     }
 

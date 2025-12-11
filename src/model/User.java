@@ -86,6 +86,7 @@ public class User {
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, username);
+            // Nilai password berasal dari objek user (password lama atau baru)
             stmt.setString(2, password);
             stmt.setString(3, namaLengkap);
             stmt.setString(4, role);

@@ -5,26 +5,38 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
+import model.User; // Import model User
+
 public class EditPenggunaDialog extends JDialog {
 
     private final DefaultTableModel model;
     private final int rowIndex;
-    private final JTextField usernameField;
-    private final JPasswordField passwordField; // Opsional diisi
-    private final JTextField namaLengkapField;
-    private final JComboBox<String> roleBox;
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private JTextField namaLengkapField;
+    private JComboBox<String> roleBox;
+    private User currentUser; // Objek User untuk menyimpan data lengkap (termasuk password lama)
+    private final int currentId;
 
     public EditPenggunaDialog(Window owner, DefaultTableModel model, int rowIndex) {
         super(owner, "Edit Detail Pengguna", ModalityType.APPLICATION_MODAL);
         this.model = model;
         this.rowIndex = rowIndex;
 
-        // --- Ambil Data Pengguna Saat Ini ---
-        String currentId = model.getValueAt(rowIndex, 0).toString();
-        String currentUsername = model.getValueAt(rowIndex, 1).toString();
-        String currentNamaLengkap = model.getValueAt(rowIndex, 2).toString();
-        String currentRole = model.getValueAt(rowIndex, 3).toString();
+        // Ambil ID dari JTable
+        String idStr = model.getValueAt(rowIndex, 0).toString();
+        this.currentId = Integer.parseInt(idStr);
 
+        // 1. Ambil Data Pengguna Lengkap dari Database
+        this.currentUser = User.getUserById(currentId);
+
+        if (currentUser == null) {
+            JOptionPane.showMessageDialog(owner, "Gagal memuat data pengguna ID: " + currentId + ". Data mungkin sudah dihapus.", "Error", JOptionPane.ERROR_MESSAGE);
+            dispose();
+            return;
+        }
+
+        // --- Setup UI ---
         setLayout(new GridBagLayout());
         if (getContentPane() instanceof JPanel) {
             getContentPane().setBackground(new Color(250, 247, 243));
@@ -43,11 +55,12 @@ public class EditPenggunaDialog extends JDialog {
         // --- Input Fields ---
         gbc.gridwidth = 1;
 
-        // 1. Username (Biasanya tidak diizinkan diubah, atau butuh validasi unik)
+        // 1. Username
         gbc.gridx = 0; gbc.gridy++;
         add(new JLabel("Username *"), gbc);
-        usernameField = new JTextField(currentUsername, 20);
-        usernameField.setEditable(false); // Opsional: Jadikan Username tidak bisa diubah
+        // Menggunakan data dari objek currentUser
+        usernameField = new JTextField(currentUser.getUsername(), 20);
+        usernameField.setEditable(false);
         gbc.gridx = 1;
         add(usernameField, gbc);
 
@@ -61,7 +74,7 @@ public class EditPenggunaDialog extends JDialog {
         // 3. Nama Lengkap
         gbc.gridx = 0; gbc.gridy++;
         add(new JLabel("Nama Lengkap"), gbc);
-        namaLengkapField = new JTextField(currentNamaLengkap, 20);
+        namaLengkapField = new JTextField(currentUser.getNamaLengkap(), 20);
         gbc.gridx = 1;
         add(namaLengkapField, gbc);
 
@@ -70,7 +83,7 @@ public class EditPenggunaDialog extends JDialog {
         add(new JLabel("Role *"), gbc);
         String[] roles = new String[]{"admin", "cashier"};
         roleBox = new JComboBox<>(roles);
-        roleBox.setSelectedItem(currentRole); // Pilih role pengguna saat ini
+        roleBox.setSelectedItem(currentUser.getRole());
         gbc.gridx = 1;
         add(roleBox, gbc);
 
@@ -103,39 +116,35 @@ public class EditPenggunaDialog extends JDialog {
 
     private void simpanPerubahanPengguna() {
         // 1. Ambil Data
-        String newUsername = usernameField.getText().trim(); // Tidak diubah jika setEditable(false)
         String newPassword = new String(passwordField.getPassword()).trim();
         String newNamaLengkap = namaLengkapField.getText().trim();
         String newRole = roleBox.getSelectedItem().toString();
 
         // 2. Validasi Input Dasar
-        if (newUsername.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Username tidak boleh kosong.", "Peringatan", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Validasi Password hanya jika diisi
         if (!newPassword.isEmpty() && newPassword.length() < 6) {
             JOptionPane.showMessageDialog(this, "Password baru minimal 6 karakter.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 3. Perbarui Baris di Tabel (Update Row in Model)
-        // Kolom: {"ID", "Username", "Nama Lengkap", "Role", "Tanggal Buat", "Aksi"}
+        // 3. Update Objek User
+        currentUser.setNamaLengkap(newNamaLengkap.isEmpty() ? currentUser.getUsername() : newNamaLengkap);
+        currentUser.setRole(newRole);
 
-        // ID (Kolom 0) tidak diubah
-        model.setValueAt(newUsername, rowIndex, 1);
-        model.setValueAt(newNamaLengkap.isEmpty() ? newUsername : newNamaLengkap, rowIndex, 2);
-        model.setValueAt(newRole, rowIndex, 3);
-        // Kolom 4 (Tanggal Buat) tidak diubah
+        if (!newPassword.isEmpty()) {
+            currentUser.setPassword(newPassword);
+        }
 
-        // Catatan: Password tidak di-update di JTable karena JTable tidak menyimpan password
+        // 4. Simpan ke Database
+        if (currentUser.updateUser()) {
 
-        JOptionPane.showMessageDialog(this, "Pengguna '" + newUsername + "' berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+            // 5. Perbarui Baris di Tabel (JTable) jika update DB berhasil
+            model.setValueAt(currentUser.getUsername(), rowIndex, 1);
+            model.setValueAt(currentUser.getNamaLengkap(), rowIndex, 2);
+            model.setValueAt(currentUser.getRole(), rowIndex, 3);
 
-        // 4. Tutup dialog setelah berhasil
-        dispose();
+            JOptionPane.showMessageDialog(this, "Pengguna '" + currentUser.getUsername() + "' berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
 
-        // Logika database: Panggil fungsi untuk update database (termasuk hash password baru jika diisi)
+            dispose();
+        }
     }
 }
