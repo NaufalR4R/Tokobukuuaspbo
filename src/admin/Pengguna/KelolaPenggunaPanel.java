@@ -63,32 +63,17 @@ public class KelolaPenggunaPanel extends JPanel {
         // LOGIKA Tambah Pengguna:
         tambahPenggunaBtn.addActionListener(e -> {
             Window owner = SwingUtilities.getWindowAncestor(this);
-            // Anda harus membuat kelas TambahPenggunaDialog
-            // TambahPenggunaDialog dialog = new TambahPenggunaDialog(owner, this);
-            // dialog.setVisible(true);
-
-            JOptionPane.showMessageDialog(this, "Silakan buat kelas TambahPenggunaDialog", "Info", JOptionPane.INFORMATION_MESSAGE);
+            TambahPenggunaDialog dialog = new TambahPenggunaDialog(owner, model);
+            dialog.setVisible(true);
+            // Panggil refresh setelah dialog ditutup
             loadDataFromDatabase();
         });
 
         header.add(tambahPenggunaBtn, BorderLayout.EAST);
 
-        // --- Search Panel ---
-        JPanel searchPanel = new JPanel(new BorderLayout(8, 8));
-        searchPanel.setBackground(new Color(250, 247, 243));
-        JTextField searchField = new JTextField("Cari berdasarkan username atau nama lengkap...");
-        JButton refreshBtn = new JButton("Refresh");
-
-        // LOGIKA: Refresh data
-        refreshBtn.addActionListener(e -> loadDataFromDatabase());
-
-        searchPanel.add(searchField, BorderLayout.CENTER);
-        searchPanel.add(refreshBtn, BorderLayout.EAST);
-
         JPanel topContainer = new JPanel(new BorderLayout(0, 10));
         topContainer.setBackground(new Color(250, 247, 243));
         topContainer.add(header, BorderLayout.NORTH);
-        topContainer.add(searchPanel, BorderLayout.SOUTH);
 
         add(topContainer, BorderLayout.NORTH);
 

@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import model.User; // Import model User
+
 public class TambahPenggunaDialog extends JDialog {
 
     private final DefaultTableModel model;
@@ -100,6 +102,11 @@ public class TambahPenggunaDialog extends JDialog {
         String namaLengkap = namaLengkapField.getText().trim();
         String role = roleBox.getSelectedItem().toString();
 
+        // Jika nama kosong, gunakan username
+        if (namaLengkap.isEmpty()) {
+            namaLengkap = username;
+        }
+
         // 2. Validasi Input Dasar
         if (username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Username dan Password harus diisi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
@@ -111,43 +118,19 @@ public class TambahPenggunaDialog extends JDialog {
             return;
         }
 
-        // 3. Generate ID dan Timestamp
-        int nextId = getNextPenggunaId(model);
-        String tanggalBuat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        // 3. Buat objek User
+        User newUser = new User();
+        newUser.setUsername(username);
+        newUser.setPassword(password);
+        newUser.setNamaLengkap(namaLengkap);
+        newUser.setRole(role);
 
-        // 4. Tambahkan ke Tabel (Database logic will handle hashing password)
-        // Kolom: {"ID", "Username", "Nama Lengkap", "Role", "Tanggal Buat", "Aksi"}
+        // 4. Simpan ke Database
+        boolean success = newUser.createUser();
 
-        model.addRow(new Object[]{
-                nextId,
-                username,
-                namaLengkap.isEmpty() ? username : namaLengkap, // Jika nama kosong, gunakan username
-                role,
-                tanggalBuat,
-                "" // Kolom Aksi
-        });
-
-        JOptionPane.showMessageDialog(this, "Pengguna '" + username + "' berhasil ditambahkan sebagai " + role + "!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
-
-        dispose();
-    }
-
-    // Method untuk mendapatkan ID pengguna berikutnya (ID terbesar + 1)
-    private int getNextPenggunaId(DefaultTableModel model) {
-        int maxId = 0;
-        for (int i = 0; i < model.getRowCount(); i++) {
-            try {
-                Object idValue = model.getValueAt(i, 0);
-                if (idValue instanceof Integer) {
-                    int currentId = (Integer) idValue;
-                    if (currentId > maxId) {
-                        maxId = currentId;
-                    }
-                }
-            } catch (Exception ignore) {
-                // Abaikan
-            }
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Pengguna '" + username + "' berhasil ditambahkan sebagai " + role + "!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+            dispose();
         }
-        return maxId + 1;
     }
 }
