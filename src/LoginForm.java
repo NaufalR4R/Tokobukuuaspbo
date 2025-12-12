@@ -4,6 +4,7 @@ import java.awt.event.ActionListener;
 import java.sql.*;
 import javax.swing.JOptionPane;
 import admin.Dashboard;
+import cashier.KasirFrame;
 import utils.Koneksi;
 
 
@@ -38,11 +39,13 @@ public class LoginForm extends JFrame{
                             da.setVisible(true);
                             LoginForm.this.dispose();
 
-                        }else if(rs.getString("eole").equals("staff")){
-//                            dashboardStaff ds = new dashboardStaff();
-//
-//                            ds.show();
-//                            this.dispose();
+                        }else if(rs.getString("role").equals("cashier")){
+                            txtUsername.setText("");
+                            txtPassword.setText("");
+                            txtUsername.requestFocus();
+                            KasirFrame kf = new KasirFrame();
+                            kf.setVisible(true);
+                            LoginForm.this.dispose();
                         }
                     }else{
                         JOptionPane.showMessageDialog(null, "Maaf login gagal, password atau username salah");
