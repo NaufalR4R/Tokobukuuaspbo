@@ -1,3 +1,5 @@
+package auth;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,6 +17,7 @@ public class LoginForm extends JFrame{
     private JPanel rootPanel;
 
     public LoginForm() {
+        setContentPane(rootPanel);
         loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {

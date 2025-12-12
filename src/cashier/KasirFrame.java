@@ -1,8 +1,7 @@
 package cashier; // Buat package baru untuk Kasir
 
 import javax.swing.*;
-import java.awt.*;
-import admin.Dashboard; // Misal, untuk tombol kembali ke Login/Keluar
+import auth.LoginForm;
 
 public class KasirFrame extends JFrame {
 
@@ -25,9 +24,9 @@ public class KasirFrame extends JFrame {
                     "Anda yakin ingin Logout?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
-                // Logika: Tutup frame kasir dan buka frame login (asumsi ada LoginFrame)
+                LoginForm lf = new LoginForm();
+                lf.setVisible(true);
                 dispose();
-                // Contoh: new LoginFrame().setVisible(true);
             }
         });
 
