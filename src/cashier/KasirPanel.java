@@ -10,11 +10,14 @@ import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
-// Import class model yang dibutuhkan
 import model.Buku;
 import model.Transaksi;
 import model.ItemTransaksi;
+import model.Kategori;
 
 public class KasirPanel extends JPanel {
 
@@ -25,7 +28,6 @@ public class KasirPanel extends JPanel {
     private final JTextField bayarField;
     private final JLabel kembalianLabel;
 
-    // ASUMSI: ID User yang sedang login (Ganti dengan logika login Anda)
     private final int currentUserId;
 
     private double currentSubTotal = 0;
@@ -36,15 +38,10 @@ public class KasirPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBackground(new Color(245, 245, 245));
 
-        // --- Container Utama (Split Pane) ---
         JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         mainSplit.setResizeWeight(0.7);
 
-        // ===================================================================
         // 1. Panel Katalog Buku (Kiri)
-        // ===================================================================
-
-        // Setup Model Katalog - PENTING: Tentukan Tipe Data untuk ID, Harga, Stok
         String[] katalogColumns = {"ID", "Judul", "Pengarang", "Kategori", "Harga", "Stok"};
         katalogModel = new DefaultTableModel(katalogColumns, 0) {
             @Override
@@ -74,16 +71,12 @@ public class KasirPanel extends JPanel {
 
         mainSplit.setLeftComponent(katalogPanel);
 
-        // ===================================================================
         // 2. Panel Keranjang & Pembayaran (Kanan)
-        // ===================================================================
-
         JPanel rightPanel = new JPanel(new BorderLayout(5, 5));
         rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         rightPanel.setBackground(new Color(245, 245, 245));
 
         // --- Keranjang Belanja (Kanan Atas) ---
-        // Kolom Cart: {"ID", "Judul", "Harga Satuan", "Qty", "Subtotal"}
         String[] cartColumns = {"ID", "Judul", "Harga Satuan", "Qty", "Subtotal"};
         cartModel = new DefaultTableModel(cartColumns, 0) {
             @Override
@@ -110,7 +103,7 @@ public class KasirPanel extends JPanel {
         JPanel totalPanel = new JPanel(new GridLayout(2, 2, 5, 5));
         totalPanel.setBackground(new Color(250, 250, 250));
 
-        totalPanel.add(new JLabel("SUB TOTAL (Rp):"));
+        totalPanel.add(new JLabel("TOTAL (Rp):"));
         subTotalLabel = new JLabel(formatRupiah(currentSubTotal));
         subTotalLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
         subTotalLabel.setForeground(new Color(46, 139, 87));
@@ -128,7 +121,7 @@ public class KasirPanel extends JPanel {
         bayarField = new JTextField();
         bayarField.setFont(new Font("SansSerif", Font.PLAIN, 18));
 
-        JButton selesaiBtn = new JButton("SELESAIKAN TRANSAKSI (F1)");
+        JButton selesaiBtn = new JButton("SELESAIKAN TRANSAKSI");
         selesaiBtn.setFont(new Font("SansSerif", Font.BOLD, 16));
         selesaiBtn.setBackground(new Color(46, 139, 87));
         selesaiBtn.setForeground(Color.WHITE);
@@ -192,29 +185,36 @@ public class KasirPanel extends JPanel {
     }
 
     // --- DATABASE INTEGRATION METHODS ---
-
     private void loadKatalogData() {
-        // Kolom: {"ID", "Judul", "Pengarang", "Kategori", "Harga", "Stok"}
         katalogModel.setRowCount(0); // Bersihkan data lama
+
+        // 1. Ambil semua Kategori dan simpan di Map (ID -> Nama)
+        Map<Integer, String> categoryMap = new HashMap<>();
+        List<Kategori> listKategori = Kategori.getAllKategori();
+        for (Kategori kategori : listKategori) {
+            categoryMap.put(kategori.getId(), kategori.getNama());
+        }
+
+        // 2. Ambil semua Buku
         ArrayList<Buku> listBuku = Buku.getAll();
 
-        // Ganti Kategori ID ke Nama Kategori (Placeholder mapping)
-        // GANTI INI JIKA ANDA MEMILIKI TABEL KATEGORI YANG BENAR
-        String[] kategoriOptions = new String[]{"Fiksi", "Non-Fiksi", "Teknologi", "Bisnis", "Lainnya"};
-
+        // 3. Iterasi Buku dan tampilkan, gunakan Map untuk nama Kategori
         for (Buku buku : listBuku) {
-            String kategoriNama = "Lainnya";
-            try {
-                // Asumsi ID kategori 1=Fiksi, 2=NonFiksi, dst.
-                kategoriNama = kategoriOptions[buku.getIdKategori() - 1];
-            } catch (ArrayIndexOutOfBoundsException ignored) {}
+            String kategoriNama = "Tidak Diketahui";
+            int idKategori = buku.getIdKategori();
 
+            // Cari nama kategori berdasarkan ID dari Map
+            if (categoryMap.containsKey(idKategori)) {
+                kategoriNama = categoryMap.get(idKategori);
+            }
+
+            // Kolom: {"ID", "Judul", "Pengarang", "Kategori", "Harga", "Stok"}
             katalogModel.addRow(new Object[]{
                     buku.getId(),
                     buku.getJudul(),
                     buku.getPenulis(),
-                    kategoriNama,
-                    buku.getHarga(), // Masukkan sebagai Double
+                    kategoriNama, // <-- Sekarang menggunakan nama dari database
+                    buku.getHarga(),
                     buku.getStok()
             });
         }
@@ -285,7 +285,6 @@ public class KasirPanel extends JPanel {
                     JOptionPane.showMessageDialog(this, "Transaksi utama berhasil, tetapi beberapa item gagal disimpan. Cek log sistem.", "Peringatan", JOptionPane.WARNING_MESSAGE);
                 }
 
-                // Bersihkan UI dan Muat Ulang Katalog (untuk update stok)
                 batalTransaksi(false);
                 loadKatalogData();
 
