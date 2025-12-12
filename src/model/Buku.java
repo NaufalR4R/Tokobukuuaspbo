@@ -145,6 +145,25 @@ public class Buku {
         }
     }
 
+    // Kurangi Stok setelah penjualan
+    public static boolean kurangiStok(int idBuku, int jumlahKurang) {
+        String query = "UPDATE buku SET stok = stok - ? WHERE id = ? AND stok >= ?";
+
+        try (Connection conn = Koneksi.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+
+            ps.setInt(1, jumlahKurang);
+            ps.setInt(2, idBuku);
+            ps.setInt(3, jumlahKurang); // Pastikan stok tidak negatif
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Gagal mengurangi stok buku: " + e.getMessage());
+            return false;
+        }
+    }
+
     // READ ALL — Ambil Semua Buku
     public static ArrayList<Buku> getAll() {
         ArrayList<Buku> list = new ArrayList<>();

@@ -48,7 +48,7 @@ public class Transaksi {
 
     //  CREATE
     public boolean create() {
-        String query = "INSERT INTO transaksi (id_pelanggan, user_id, harga_total, jumlah_bayar, jumlah_kembalian) VALUES (NULL, ?, ?, ?, ?)";
+        String query = "INSERT INTO transaksi ( user_id, harga_total, jumlah_bayar, jumlah_kembalian) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = Koneksi.getConnection();
              PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
