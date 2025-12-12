@@ -6,13 +6,13 @@ import admin.Dashboard; // Misal, untuk tombol kembali ke Login/Keluar
 
 public class KasirFrame extends JFrame {
 
-    public KasirFrame() {
+    public KasirFrame(int userId) {
         setTitle("Sistem Kasir - Toko Buku ");
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Muat KasirPanel sebagai konten utama
-        KasirPanel kasirPanel = new KasirPanel(this);
+        KasirPanel kasirPanel = new KasirPanel(this, userId);
         setContentPane(kasirPanel);
 
         // Membuat menu bar sederhana (Opsional: untuk Keluar/Logout)
@@ -41,7 +41,7 @@ public class KasirFrame extends JFrame {
     public static void main(String[] args) {
         // Jalankan aplikasi di Event Dispatch Thread (rekomendasi Swing)
         SwingUtilities.invokeLater(() -> {
-            new KasirFrame();
+            new KasirFrame(1);
         });
     }
 }

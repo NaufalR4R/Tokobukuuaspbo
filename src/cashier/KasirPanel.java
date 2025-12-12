@@ -26,12 +26,13 @@ public class KasirPanel extends JPanel {
     private final JLabel kembalianLabel;
 
     // ASUMSI: ID User yang sedang login (Ganti dengan logika login Anda)
-    private static final int CURRENT_USER_ID = 1;
+    private final int currentUserId;
 
     private double currentSubTotal = 0;
 
-    public KasirPanel(JFrame parentFrame) {
+    public KasirPanel(JFrame parentFrame, int userId) {
         this.parentFrame = parentFrame;
+        this.currentUserId = userId;
         setLayout(new BorderLayout(10, 10));
         setBackground(new Color(245, 245, 245));
 
@@ -63,8 +64,6 @@ public class KasirPanel extends JPanel {
         // ... (Header Katalog UI)
         JPanel katalogHeader = new JPanel(new BorderLayout(5, 5));
         katalogHeader.setBackground(new Color(250, 250, 250));
-        JTextField searchField = new JTextField("Cari Judul, Pengarang, atau ID...");
-        katalogHeader.add(searchField, BorderLayout.CENTER);
         katalogHeader.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         JPanel katalogPanel = new JPanel(new BorderLayout());
@@ -242,7 +241,7 @@ public class KasirPanel extends JPanel {
 
             // 2. BUAT & SIMPAN TRANSAKSI BARU (MASTER)
             Transaksi transaksiBaru = new Transaksi();
-            transaksiBaru.setUserId(CURRENT_USER_ID);
+            transaksiBaru.setUserId(this.currentUserId);
             transaksiBaru.setHargaTotal(currentSubTotal);
             transaksiBaru.setJumlahBayar(bayar);
             transaksiBaru.setJumlahKembalian(kembalian);

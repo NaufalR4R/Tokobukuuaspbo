@@ -30,6 +30,8 @@ public class LoginForm extends JFrame{
 
                     ResultSet rs = st.executeQuery(sql);
                     if (rs.next()) {
+                        String role = rs.getString("role");
+                        int userId = rs.getInt("id");
                         if (rs.getString("role").equals("admin")) {
 //                            JOptionPane.showMessageDialog(null, "login berhasil");
                             txtUsername.setText("");
@@ -43,7 +45,7 @@ public class LoginForm extends JFrame{
                             txtUsername.setText("");
                             txtPassword.setText("");
                             txtUsername.requestFocus();
-                            KasirFrame kf = new KasirFrame();
+                            KasirFrame kf = new KasirFrame(userId);
                             kf.setVisible(true);
                             LoginForm.this.dispose();
                         }
