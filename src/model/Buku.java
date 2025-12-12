@@ -192,4 +192,38 @@ public class Buku {
 
         return list;
     }
+
+    public static int countBuku() {
+        String query = "SELECT COUNT(id) FROM buku";
+
+        try (Connection conn = Koneksi.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(query)) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Gagal menghitung buku: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    public static int sumStok() {
+        String query = "SELECT SUM(stok) FROM buku";
+
+        try (Connection conn = Koneksi.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(query)) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Gagal menghitung total stok buku: " + e.getMessage());
+        }
+        return 0;
+    }
 }

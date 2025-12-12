@@ -166,4 +166,38 @@ public class Transaksi {
         }
         return false;
     }
+
+    public static int countTransaksi() {
+        String query = "SELECT COUNT(id) FROM transaksi";
+
+        try (Connection conn = Koneksi.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(query)) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Gagal menghitung transaksi: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    public static int sumPendapatan() {
+        String query = "SELECT SUM(harga_total) FROM transaksi";
+
+        try (Connection conn = Koneksi.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(query)) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Gagal menghitung total harga_total transaksi: " + e.getMessage());
+        }
+        return 0;
+    }
 }

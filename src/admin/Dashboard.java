@@ -1,7 +1,9 @@
 package admin;
 
-import admin.Pengguna.KelolaPenggunaPanel;
 import admin.buku.KelolaBukuPanel;
+import model.Buku;
+import model.Kategori;
+import model.Transaksi;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -13,11 +15,19 @@ public class Dashboard extends JFrame {
     private JButton kelolaKategoriButton;
     private JButton lihatTransaksiButton;
     private JButton kelolaPenggunaButton;
+    private JLabel tfCountBuku;
+    private JLabel tfSumStok;
+    private JLabel tfCountKategori;
+    private JLabel tfCountTransaksi;
+    private JLabel tfPendapatan;
 
     public Dashboard() {
         setContentPane(rootPanel);
         setTitle("Dashboard Admin");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        loadDashboardData();
+
         pack();
         setLocationRelativeTo(null);
 
@@ -59,6 +69,25 @@ public class Dashboard extends JFrame {
                 framePengguna.setLocationRelativeTo(null);
                 framePengguna.setVisible(true);;
         });
+    }
+
+    private void loadDashboardData() {
+        // Ambil data dari class Buku
+        int countBuku = Buku.countBuku();
+        int sumStok = Buku.sumStok();
+        int countKategori = Kategori.countKategori();
+        int countTransaksi = Transaksi.countTransaksi();
+        int sumPendapatan = Transaksi.sumPendapatan();
+
+        // Set teks pada JLabel
+        // Periksa apakah tfCountBuku tidak null (penting jika menggunakan designer)
+        if (tfCountBuku != null) {
+            tfCountBuku.setText(String.valueOf(countBuku));
+            tfSumStok.setText(String.valueOf(sumStok));
+            tfCountKategori.setText(String.valueOf(countKategori));
+            tfCountTransaksi.setText(String.valueOf(countTransaksi));
+            tfPendapatan.setText(String.valueOf(sumPendapatan));
+        }
     }
 
     public static void main(String[] args) {

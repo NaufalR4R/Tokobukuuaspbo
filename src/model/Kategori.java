@@ -164,4 +164,21 @@ public class Kategori {
 
         return null;
     }
+
+    public static int countKategori() {
+        String query = "SELECT COUNT(id) FROM kategori";
+
+        try (Connection conn = Koneksi.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(query)) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Gagal menghitung kategori: " + e.getMessage());
+        }
+        return 0;
+    }
 }
