@@ -1,6 +1,7 @@
 package admin;
 
 import admin.buku.KelolaBukuPanel;
+import auth.LoginForm;
 import model.Buku;
 import model.Kategori;
 import model.Transaksi;
@@ -20,6 +21,7 @@ public class Dashboard extends JFrame {
     private JLabel tfCountKategori;
     private JLabel tfCountTransaksi;
     private JLabel tfPendapatan;
+    private JButton logOutButton;
 
     public Dashboard() {
         setContentPane(rootPanel);
@@ -68,6 +70,19 @@ public class Dashboard extends JFrame {
                 framePengguna.pack();
                 framePengguna.setLocationRelativeTo(null);
                 framePengguna.setVisible(true);;
+        });
+        logOutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                int confirm = JOptionPane.showConfirmDialog(Dashboard.this,
+                        "Anda yakin ingin Logout?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    LoginForm lf = new LoginForm();
+                    lf.setVisible(true);
+                    dispose();
+                }
+            }
         });
     }
 
