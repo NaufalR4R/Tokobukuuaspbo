@@ -6,10 +6,8 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
 
-// Import kelas Kategori dan Buku
 import model.Buku;
 import model.Kategori;
-// ASUMSI: Class Buku ada di package models. Silakan sesuaikan jika berbeda.
 
 
 public class KelolaBukuPanel extends JPanel {
@@ -26,7 +24,7 @@ public class KelolaBukuPanel extends JPanel {
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
-                return col == 6; // Hanya kolom "Aksi" yang bisa diedit (untuk tombol)
+                return col == 6;
             }
             @Override
             public Class<?> getColumnClass(int columnIndex) {
@@ -65,26 +63,15 @@ public class KelolaBukuPanel extends JPanel {
             dialog.setVisible(true);
         });
         header.add(tambahBukuBtn, BorderLayout.EAST);
-
-        // --- Search Panel ---
-        JPanel searchPanel = new JPanel(new BorderLayout(8, 8));
-        searchPanel.setBackground(new Color(250, 247, 243));
-        JTextField searchField = new JTextField("Cari judul, pengarang, atau kategori...");
-        JButton refreshBtn = new JButton("Refresh");
-        refreshBtn.addActionListener(e -> loadBukuData());
-        searchPanel.add(searchField, BorderLayout.CENTER);
-        searchPanel.add(refreshBtn, BorderLayout.EAST);
         JPanel topContainer = new JPanel(new BorderLayout(0, 10));
         topContainer.setBackground(new Color(250, 247, 243));
         topContainer.add(header, BorderLayout.NORTH);
-        topContainer.add(searchPanel, BorderLayout.SOUTH);
 
         add(topContainer, BorderLayout.NORTH);
 
         table = new JTable(model);
         table.setRowHeight(30);
 
-        // ASUMSI: ButtonRenderer dan ButtonEditor sudah tersedia di package yang sama
         TableColumn actionColumn = table.getColumnModel().getColumn(6);
         actionColumn.setCellRenderer(new ButtonRenderer());
         actionColumn.setCellEditor(new ButtonEditor(table, model, this));
@@ -112,7 +99,6 @@ public class KelolaBukuPanel extends JPanel {
     public void loadBukuData() {
         model.setRowCount(0);
 
-        // ASUMSI: Method Buku.getAll() sudah ada dan mengembalikan ArrayList<Buku>
         ArrayList<Buku> listBuku = Buku.getAll();
 
         for (Buku buku : listBuku) {
@@ -137,7 +123,7 @@ public class KelolaBukuPanel extends JPanel {
                     buku.getId(),
                     buku.getJudul(),
                     buku.getPenulis(),
-                    kategoriNama, // Menggunakan Nama Kategori
+                    kategoriNama,
                     hargaFormatted,
                     buku.getStok(),
                     ""
